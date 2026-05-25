@@ -1,0 +1,55 @@
+:root {
+  --app-board-gap: 0.25rem;
+  --app-cell-size: 2.25rem;
+}
+
+body {
+  min-height: 100vh;
+  background: #f7f7f9;
+}
+
+.app-header {
+  background: #ffffff;
+}
+
+#app {
+  min-height: calc(100vh - 4rem);
+}
+
+.page-heading {
+  min-height: 4rem;
+}
+
+.empty-state {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.game-board-preview {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(1.75rem, var(--app-cell-size)));
+  gap: var(--app-board-gap);
+  width: min(100%, 24rem);
+}
+
+.board-cell {
+  aspect-ratio: 1;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  background: #ffffff;
+}
+
+.board-cell-wall {
+  background: #343a40;
+}
+
+.mobile-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 24rem;
+}
+
+@media (min-width: 768px) {
+  .mobile-controls {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
