@@ -1,24 +1,12 @@
-import { createElement, createEmptyState, createPageHeader } from "./dom.js";
-
-const demoPresets = [
-  {
-    id: "classic-01",
-    name: "Klasyczny labirynt",
-    size: "12 x 10",
-    coins: 8,
-    enemies: 3
-  },
-  {
-    id: "lava-run",
-    name: "Lava Run",
-    size: "14 x 12",
-    coins: 12,
-    enemies: 4
-  }
-];
+import { createAlert, createElement, createEmptyState, createPageHeader } from "./dom.js";
 
 export class PresetListView {
+  constructor({ presetRepository }) {
+    this.presetRepository = presetRepository;
+  }
+
   render() {
+    const presets = this.presetRepository.getAll();
     const addButton = createElement("a", {
       className: "btn btn-primary",
       attributes: {
@@ -49,11 +37,11 @@ export class PresetListView {
       }
     });
 
-    demoPresets.forEach((preset) => {
+    presets.forEach((preset) => {
       list.appendChild(this.createPresetCard(preset));
     });
 
-    list.addEventListener("click", (event) => {
+    list.addEventListener("click", async (event) => {
       const actionButton = event.target.closest("[data-preset-action]");
 
       if (!actionButton) {
@@ -64,14 +52,21 @@ export class PresetListView {
 
       if (presetAction === "delete") {
         event.preventDefault();
-        actionButton.closest("[data-preset-card]").remove();
-        this.showListMessage(section, `Preset ${presetId} został usunięty z widoku testowego.`);
+
+        try {
+          await this.presetRepository.deleteById(presetId);
+          actionButton.closest("[data-preset-card]").remove();
+          this.showListMessage(section, `Preset ${presetId} został usunięty.`);
+          this.toggleEmptyState(section);
+        } catch (error) {
+          this.showListMessage(section, error.message, "danger");
+        }
       }
     });
 
     section.appendChild(list);
 
-    if (demoPresets.length === 0) {
+    if (presets.length === 0) {
       section.appendChild(createEmptyState(
         "Brak presetów",
         "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
@@ -100,7 +95,7 @@ export class PresetListView {
                 }),
                 createElement("p", {
                   className: "card-text text-body-secondary",
-                  text: `Rozmiar: ${preset.size}. Monety: ${preset.coins}. Przeciwnicy: ${preset.enemies}.`
+                  text: `Rozmiar: ${preset.width} x ${preset.height}. Monety: ${preset.coins.length}. Przeciwnicy: ${preset.enemies.length}.`
                 }),
                 createElement("div", {
                   className: "d-flex flex-wrap gap-2",
@@ -138,23 +133,29 @@ export class PresetListView {
     });
   }
 
-  showListMessage(section, message) {
+  showListMessage(section, message, type = "info") {
     const existingMessage = section.querySelector("[data-view-message]");
 
     if (existingMessage) {
       existingMessage.remove();
     }
 
-    const alert = createElement("div", {
-      className: "alert alert-info",
-      attributes: {
-        role: "status",
-        "data-view-message": "true"
-      },
-      text: message
-    });
+    const alert = createAlert(message, type);
+    alert.dataset.viewMessage = "true";
 
     section.insertBefore(alert, section.querySelector("[data-preset-list]"));
   }
-}
 
+  toggleEmptyState(section) {
+    const list = section.querySelector("[data-preset-list]");
+
+    if (list.children.length > 0) {
+      return;
+    }
+
+    section.appendChild(createEmptyState(
+      "Brak presetów",
+      "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
+    ));
+  }
+}

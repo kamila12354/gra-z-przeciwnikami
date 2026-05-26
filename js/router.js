@@ -4,6 +4,7 @@ export class Router {
     this.defaultRoute = defaultRoute;
     this.navLinks = navLinks;
     this.routes = routes;
+    this.currentView = null;
   }
 
   start() {
@@ -17,7 +18,7 @@ export class Router {
     this.renderCurrentRoute();
   }
 
-  renderCurrentRoute() {
+  async renderCurrentRoute() {
     const hash = window.location.hash || this.defaultRoute;
     const matchedRoute = this.findRoute(hash);
 
@@ -26,9 +27,22 @@ export class Router {
       return;
     }
 
-    this.app.replaceChildren(matchedRoute.render(matchedRoute.params));
-    document.title = `${matchedRoute.title} | Gra z Przeciwnikami`;
-    this.updateActiveNavigation(hash);
+    try {
+      const view = await matchedRoute.render(matchedRoute.params);
+      this.destroyCurrentView();
+      this.app.replaceChildren(view);
+      this.currentView = view;
+      document.title = `${matchedRoute.title} | Gra z Przeciwnikami`;
+      this.updateActiveNavigation(hash);
+    } catch (error) {
+      this.app.replaceChildren(this.createRouteError(error));
+    }
+  }
+
+  destroyCurrentView() {
+    if (typeof this.currentView?.destroy === "function") {
+      this.currentView.destroy();
+    }
   }
 
   findRoute(hash) {
@@ -53,5 +67,23 @@ export class Router {
       link.toggleAttribute("aria-current", isActive);
     });
   }
-}
 
+  createRouteError(error) {
+    const section = document.createElement("section");
+    section.className = "py-5";
+
+    const title = document.createElement("h1");
+    title.className = "h3 mb-3";
+    title.textContent = "Wystąpił błąd widoku";
+
+    const alert = document.createElement("div");
+    alert.className = "alert alert-danger";
+    alert.role = "alert";
+    alert.textContent = error.message || "Spróbuj odświeżyć aplikację.";
+
+    section.appendChild(title);
+    section.appendChild(alert);
+
+    return section;
+  }
+}

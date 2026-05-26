@@ -1,37 +1,53 @@
+import { Game } from "../game/Game.js";
 import { createElement, createPageHeader } from "./dom.js";
 
 export class GameView {
-  constructor({ presetId }) {
+  constructor({ presetId, preset, statsService }) {
     this.presetId = presetId;
+    this.preset = preset;
+    this.statsService = statsService;
   }
 
   render() {
+    if (!this.preset) {
+      return this.createMissingPresetView();
+    }
+
     const section = createElement("section", {
       attributes: {
         "aria-labelledby": "game-title"
       },
       children: [
         createPageHeader(
-          "Gra",
-          `Widok rozgrywki dla presetu: ${this.presetId}. Logika planszy pojawi się w kolejnym etapie.`
+          this.preset.name,
+          "Poruszaj graczem przy pomocy WASD, strzałek albo przycisków mobilnych."
         ),
         this.createHud(),
-        this.createBoardPlaceholder(),
+        this.createBoardContainer(),
         this.createMobileControls()
       ]
     });
 
     section.querySelector("h1").id = "game-title";
 
+    const game = new Game({
+      preset: this.preset,
+      root: section,
+      statsService: this.statsService
+    });
+
+    section.destroy = () => game.destroy();
+    requestAnimationFrame(() => game.start());
+
     return section;
   }
 
   createHud() {
     const hudItems = [
-      ["Monety", "0 / 0"],
-      ["Ruchy", "0"],
-      ["Czas", "00:00"],
-      ["Status", "Gotowe"]
+      ["coins", "Monety", `0 / ${this.preset.coins.length}`],
+      ["moves", "Ruchy", "0"],
+      ["time", "Czas", "00:00"],
+      ["status", "Status", "Gotowe"]
     ];
 
     return createElement("section", {
@@ -39,7 +55,7 @@ export class GameView {
       attributes: {
         "aria-label": "Panel gry"
       },
-      children: hudItems.map(([label, value]) => createElement("article", {
+      children: hudItems.map(([name, label, value]) => createElement("article", {
         className: "col-6 col-lg-3",
         children: [
           createElement("div", {
@@ -54,6 +70,9 @@ export class GameView {
                   }),
                   createElement("p", {
                     className: "h5 mb-0",
+                    attributes: {
+                      "data-hud-value": name
+                    },
                     text: value
                   })
                 ]
@@ -65,20 +84,12 @@ export class GameView {
     });
   }
 
-  createBoardPlaceholder() {
-    const cells = Array.from({ length: 48 }, (_, index) => createElement("div", {
-      className: index % 7 === 0 ? "board-cell board-cell-wall" : "board-cell",
+  createBoardContainer() {
+    return createElement("div", {
+      className: "mb-4",
       attributes: {
-        "aria-hidden": "true"
+        "data-game-board": "true"
       }
-    }));
-
-    return createElement("section", {
-      className: "game-board-preview mb-4",
-      attributes: {
-        "aria-label": "Podgląd planszy"
-      },
-      children: cells
     });
   }
 
@@ -93,7 +104,8 @@ export class GameView {
     return createElement("section", {
       className: "mobile-controls d-grid gap-2",
       attributes: {
-        "aria-label": "Sterowanie mobilne"
+        "aria-label": "Sterowanie mobilne",
+        "data-mobile-controls": "true"
       },
       children: controls.map(([direction, label]) => createElement("button", {
         className: "btn btn-outline-secondary",
@@ -105,5 +117,31 @@ export class GameView {
       }))
     });
   }
-}
 
+  createMissingPresetView() {
+    return createElement("section", {
+      className: "py-5",
+      attributes: {
+        "aria-labelledby": "missing-preset-title"
+      },
+      children: [
+        createElement("h1", {
+          className: "h3 mb-3",
+          id: "missing-preset-title",
+          text: "Nie znaleziono presetu"
+        }),
+        createElement("p", {
+          className: "text-body-secondary",
+          text: `Preset o identyfikatorze ${this.presetId} nie istnieje albo został usunięty.`
+        }),
+        createElement("a", {
+          className: "btn btn-primary",
+          attributes: {
+            href: "#/presets"
+          },
+          text: "Wróć do presetów"
+        })
+      ]
+    });
+  }
+}

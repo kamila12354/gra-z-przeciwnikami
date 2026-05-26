@@ -1,2 +1,85 @@
-[]
+[
+  {
+    "id": "classic-01",
+    "name": "Klasyczny labirynt",
+    "width": 12,
+    "height": 10,
+    "playerStart": { "x": 1, "y": 1 },
+    "walls": [
+      { "x": 3, "y": 0 },
+      { "x": 3, "y": 1 },
+      { "x": 3, "y": 2 },
+      { "x": 3, "y": 3 },
+      { "x": 6, "y": 3 },
+      { "x": 7, "y": 3 },
+      { "x": 8, "y": 3 },
+      { "x": 6, "y": 6 },
+      { "x": 6, "y": 7 },
+      { "x": 6, "y": 8 }
+    ],
+    "coins": [
+      { "x": 2, "y": 2 },
+      { "x": 5, "y": 1 },
+      { "x": 10, "y": 2 },
+      { "x": 2, "y": 7 },
+      { "x": 9, "y": 8 }
+    ],
+    "enemies": [
+      {
+        "type": "normal",
+        "speed": 1,
+        "intelligence": 4,
+        "start": { "x": 9, "y": 6 }
+      },
+      {
+        "type": "lava",
+        "speed": 1,
+        "intelligence": 2,
+        "start": { "x": 1, "y": 8 }
+      }
+    ]
+  },
+  {
+    "id": "electro-grid",
+    "name": "Electro Grid",
+    "width": 14,
+    "height": 12,
+    "playerStart": { "x": 1, "y": 10 },
+    "walls": [
+      { "x": 2, "y": 2 },
+      { "x": 3, "y": 2 },
+      { "x": 4, "y": 2 },
+      { "x": 5, "y": 2 },
+      { "x": 8, "y": 4 },
+      { "x": 8, "y": 5 },
+      { "x": 8, "y": 6 },
+      { "x": 8, "y": 7 },
+      { "x": 4, "y": 8 },
+      { "x": 5, "y": 8 },
+      { "x": 6, "y": 8 }
+    ],
+    "coins": [
+      { "x": 1, "y": 1 },
+      { "x": 7, "y": 1 },
+      { "x": 12, "y": 2 },
+      { "x": 3, "y": 9 },
+      { "x": 10, "y": 10 },
+      { "x": 12, "y": 10 }
+    ],
+    "enemies": [
+      {
+        "type": "electrone",
+        "speed": 1,
+        "intelligence": 5,
+        "start": { "x": 10, "y": 4 }
+      },
+      {
+        "type": "normal",
+        "speed": 2,
+        "intelligence": 6,
+        "start": { "x": 12, "y": 8 }
+      }
+    ]
+  }
+]
 

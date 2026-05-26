@@ -74,3 +74,51 @@ export function createEmptyState(title, description) {
   });
 }
 
+export function createAlert(message, type = "info") {
+  return createElement("div", {
+    className: `alert alert-${type}`,
+    attributes: {
+      role: type === "danger" ? "alert" : "status"
+    },
+    text: message
+  });
+}
+
+export function createLoadingView(message = "Ładowanie danych aplikacji...") {
+  return createElement("section", {
+    className: "text-center py-5",
+    attributes: {
+      "aria-live": "polite"
+    },
+    children: [
+      createElement("div", {
+        className: "spinner-border text-primary mb-3",
+        attributes: {
+          role: "status",
+          "aria-hidden": "true"
+        }
+      }),
+      createElement("p", {
+        className: "text-body-secondary mb-0",
+        text: message
+      })
+    ]
+  });
+}
+
+export function createErrorView(message) {
+  return createElement("section", {
+    className: "py-5",
+    attributes: {
+      "aria-labelledby": "error-title"
+    },
+    children: [
+      createElement("h1", {
+        className: "h3 mb-3",
+        id: "error-title",
+        text: "Nie udało się uruchomić aplikacji"
+      }),
+      createAlert(message, "danger")
+    ]
+  });
+}
