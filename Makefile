@@ -18,10 +18,9 @@ serve:
 check: check-js check-json
 
 check-js:
-	@for file in js/*.js js/ui/*.js js/storage/*.js js/presets/*.js js/stats/*.js js/game/*.js; do \
+	@for file in js/*.js js/ui/*.js js/storage/*.js js/presets/*.js js/stats/*.js js/game/*.js js/enemies/*.js; do \
 		node --check "$$file"; \
 	done
 
 check-json:
 	@node -e "JSON.parse(require('fs').readFileSync('data/default-presets.json', 'utf8')); console.log('JSON OK')"
-

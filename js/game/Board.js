@@ -7,6 +7,8 @@ export class Board {
     this.walls = new Set(preset.walls.map((wall) => this.createPositionKey(wall)));
     this.coins = new Set(preset.coins.map((coin) => this.createPositionKey(coin)));
     this.enemyStarts = new Set(preset.enemies.map((enemy) => this.createPositionKey(enemy.start)));
+    this.lavaTrails = new Set();
+    this.electricZones = new Set();
     this.playerStart = { ...preset.playerStart };
     this.element = null;
   }
@@ -68,6 +70,11 @@ export class Board {
     this.getCell(nextPosition)?.classList.add("board-cell-player");
   }
 
+  updateEnemyPosition(previousPosition, nextPosition) {
+    this.getCell(previousPosition)?.classList.remove("board-cell-enemy");
+    this.getCell(nextPosition)?.classList.add("board-cell-enemy");
+  }
+
   collectCoinAt(position) {
     const key = this.createPositionKey(position);
 
@@ -93,6 +100,40 @@ export class Board {
 
   hasWallAt(position) {
     return this.walls.has(this.createPositionKey(position));
+  }
+
+  isInside({ x, y }) {
+    return x >= 0 && y >= 0 && x < this.width && y < this.height;
+  }
+
+  addLavaTrail(position) {
+    const key = this.createPositionKey(position);
+    this.lavaTrails.add(key);
+    this.getCell(position)?.classList.add("board-cell-lava");
+  }
+
+  hasLavaTrailAt(position) {
+    return this.lavaTrails.has(this.createPositionKey(position));
+  }
+
+  setElectricZones(positions) {
+    positions.forEach((position) => {
+      const key = this.createPositionKey(position);
+      this.electricZones.add(key);
+      this.getCell(position)?.classList.add("board-cell-electric");
+    });
+  }
+
+  clearElectricZones() {
+    this.electricZones.forEach((key) => {
+      const [x, y] = key.split(":").map(Number);
+      this.getCell({ x, y })?.classList.remove("board-cell-electric");
+    });
+    this.electricZones.clear();
+  }
+
+  hasElectricZoneAt(position) {
+    return this.electricZones.has(this.createPositionKey(position));
   }
 
   getCell({ x, y }) {

@@ -1,3 +1,4 @@
+import { createEnemy } from "../enemies/EnemyFactory.js";
 import { Board } from "./Board.js";
 import { CollisionService } from "./CollisionService.js";
 import { Player } from "./Player.js";
@@ -25,12 +26,14 @@ export class Game {
     this.board = new Board(preset);
     this.collisionService = new CollisionService(this.board);
     this.player = new Player(preset.playerStart);
+    this.enemies = preset.enemies.map((enemyConfig) => createEnemy(enemyConfig));
     this.totalCoins = preset.coins.length;
     this.collectedCoins = 0;
     this.moves = 0;
     this.startedAt = null;
     this.elapsedSeconds = 0;
     this.timerId = null;
+    this.enemyLoopId = null;
     this.isFinished = false;
     this.abortController = new AbortController();
   }
@@ -41,6 +44,7 @@ export class Game {
     this.startedAt = Date.now();
     this.updateHud("Zbierz wszystkie monety");
     this.startTimer();
+    this.startEnemyLoop();
     this.bindKeyboardControls();
     this.bindTouchControls();
   }
@@ -48,6 +52,7 @@ export class Game {
   destroy() {
     this.abortController.abort();
     this.stopTimer();
+    this.stopEnemyLoop();
   }
 
   bindKeyboardControls() {
@@ -107,6 +112,13 @@ export class Game {
         this.collectedCoins += 1;
       }
 
+      const playerDeathReason = this.getPlayerDeathReason(nextPosition);
+
+      if (playerDeathReason) {
+        this.finishWithLoss(playerDeathReason);
+        return;
+      }
+
       if (this.collectedCoins === this.totalCoins) {
         this.finishWithWin();
         return;
@@ -149,12 +161,83 @@ export class Game {
     }
   }
 
+  startEnemyLoop() {
+    this.enemyLoopId = window.setInterval(() => {
+      this.updateEnemies();
+    }, 700);
+  }
+
+  stopEnemyLoop() {
+    if (this.enemyLoopId) {
+      window.clearInterval(this.enemyLoopId);
+      this.enemyLoopId = null;
+    }
+  }
+
+  updateEnemies() {
+    if (this.isFinished) {
+      return;
+    }
+
+    const playerPosition = this.player.getPosition();
+    this.board.clearElectricZones();
+
+    this.enemies.forEach((enemy) => {
+      if (!enemy.canAct()) {
+        return;
+      }
+
+      const previousPosition = enemy.getPosition();
+      const result = enemy.update({
+        board: this.board,
+        collisionService: this.collisionService,
+        playerPosition
+      });
+
+      if (result.lavaTrail) {
+        this.board.addLavaTrail(result.lavaTrail);
+      }
+
+      if (result.electricZones?.length > 0) {
+        this.board.setElectricZones(result.electricZones);
+      }
+
+      this.board.updateEnemyPosition(previousPosition, enemy.getPosition());
+    });
+
+    const deathReason = this.getPlayerDeathReason(this.player.getPosition());
+
+    if (deathReason) {
+      this.finishWithLoss(deathReason);
+      return;
+    }
+
+    this.updateHud("Przeciwnicy wykonali ruch");
+  }
+
+  getPlayerDeathReason(position) {
+    if (this.enemies.some((enemy) => this.isSamePosition(enemy.getPosition(), position))) {
+      return "Złapany przez przeciwnika";
+    }
+
+    if (this.board.hasLavaTrailAt(position)) {
+      return "Wejście na ślad lawy";
+    }
+
+    if (this.board.hasElectricZoneAt(position)) {
+      return "Trafienie piorunem electrone";
+    }
+
+    return null;
+  }
+
   async finishWithWin() {
     this.isFinished = true;
     this.stopTimer();
+    this.stopEnemyLoop();
     this.abortController.abort();
     this.updateHud("Wygrana - zebrano wszystkie monety");
-    this.showEndGameMessage("Wygrana", "Udało się zebrać wszystkie monety na mapie.");
+    this.showEndGameMessage("Wygrana", "Udało się zebrać wszystkie monety na mapie.", "success");
 
     if (!this.statsService) {
       return;
@@ -172,11 +255,39 @@ export class Game {
         totalCoins: this.totalCoins
       });
     } catch (error) {
-      this.showEndGameMessage("Wygrana", "Wynik gry jest poprawny, ale nie udało się zapisać statystyk.");
+      this.showEndGameMessage("Wygrana", "Wynik gry jest poprawny, ale nie udało się zapisać statystyk.", "warning");
     }
   }
 
-  showEndGameMessage(title, description) {
+  async finishWithLoss(deathReason) {
+    this.isFinished = true;
+    this.stopTimer();
+    this.stopEnemyLoop();
+    this.abortController.abort();
+    this.updateHud(`Przegrana - ${deathReason}`);
+    this.showEndGameMessage("Przegrana", deathReason, "danger");
+
+    if (!this.statsService) {
+      return;
+    }
+
+    try {
+      await this.statsService.addResult({
+        presetId: this.preset.id,
+        presetName: this.preset.name,
+        result: "przegrana",
+        deathReason,
+        durationSeconds: this.elapsedSeconds,
+        moves: this.moves,
+        collectedCoins: this.collectedCoins,
+        totalCoins: this.totalCoins
+      });
+    } catch (error) {
+      this.showEndGameMessage("Przegrana", "Gra zakończona, ale nie udało się zapisać statystyk.", "danger");
+    }
+  }
+
+  showEndGameMessage(title, description, type) {
     const existingMessage = this.root.querySelector("[data-game-result]");
 
     if (existingMessage) {
@@ -184,7 +295,7 @@ export class Game {
     }
 
     const alert = document.createElement("div");
-    alert.className = "alert alert-success";
+    alert.className = `alert alert-${type}`;
     alert.dataset.gameResult = "true";
     alert.role = "status";
 
@@ -199,6 +310,10 @@ export class Game {
     alert.appendChild(heading);
     alert.appendChild(text);
     this.root.querySelector("[data-game-board]").after(alert);
+  }
+
+  isSamePosition(firstPosition, secondPosition) {
+    return firstPosition.x === secondPosition.x && firstPosition.y === secondPosition.y;
   }
 
   formatTime(totalSeconds) {

@@ -51,6 +51,10 @@ export class StatsView {
                   createElement("p", {
                     className: "text-body-secondary mb-0",
                     text: `Wynik: ${entry.result || "brak danych"}. Monety: ${entry.collectedCoins || 0}/${entry.totalCoins || 0}. Ruchy: ${entry.moves || 0}. Czas: ${this.formatDuration(entry.durationSeconds || 0)}.`
+                  }),
+                  createElement("p", {
+                    className: "text-body-secondary small mb-0",
+                    text: entry.deathReason ? `Przyczyna: ${entry.deathReason}.` : "Przyczyna: ukończono mapę."
                   })
                 ]
               }),
