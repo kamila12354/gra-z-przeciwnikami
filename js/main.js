@@ -34,6 +34,7 @@ const routes = [
   {
     pattern: /^#\/editor$/,
     render: () => new EditorView({
+      presetRepository,
       presets: presetRepository.getAll()
     }).render(),
     title: "Edytor"
@@ -42,6 +43,7 @@ const routes = [
     pattern: /^#\/editor\/(?<presetId>[\w-]+)$/,
     render: (params) => new EditorView({
       ...params,
+      presetRepository,
       preset: presetRepository.findById(params.presetId),
       presets: presetRepository.getAll()
     }).render(),
@@ -50,7 +52,7 @@ const routes = [
   {
     pattern: /^#\/stats$/,
     render: () => new StatsView({
-      stats: statsService.getAll()
+      statsService
     }).render(),
     title: "Statystyki"
   }

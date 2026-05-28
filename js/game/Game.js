@@ -161,6 +161,16 @@ export class Game {
     }
   }
 
+  updateElapsedTime() {
+    if (!this.startedAt) {
+      this.elapsedSeconds = 0;
+      return;
+    }
+
+    this.elapsedSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
+    this.setHudValue("time", this.formatTime(this.elapsedSeconds));
+  }
+
   startEnemyLoop() {
     this.enemyLoopId = window.setInterval(() => {
       this.updateEnemies();
@@ -233,6 +243,7 @@ export class Game {
 
   async finishWithWin() {
     this.isFinished = true;
+    this.updateElapsedTime();
     this.stopTimer();
     this.stopEnemyLoop();
     this.abortController.abort();
@@ -261,6 +272,7 @@ export class Game {
 
   async finishWithLoss(deathReason) {
     this.isFinished = true;
+    this.updateElapsedTime();
     this.stopTimer();
     this.stopEnemyLoop();
     this.abortController.abort();

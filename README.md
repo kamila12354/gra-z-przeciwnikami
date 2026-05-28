@@ -59,4 +59,6 @@ assets/screenshots/
 5. Etap 5: monety, HUD i warunek zwycięstwa - gotowe.
 6. Etap 6: przeciwnicy i warunek przegranej - gotowe.
 7. Etap 7: formularz i lista przeciwników - gotowe.
+8. Etap 8: edytor presetów z zapisem - gotowe.
+9. Etap 9: statystyki rozgrywek - gotowe.
 # Pixel-Art

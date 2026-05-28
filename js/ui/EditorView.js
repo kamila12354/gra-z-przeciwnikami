@@ -6,14 +6,34 @@ const ENEMY_TYPES = {
   electrone: "Electrone - atakuje piorunem"
 };
 
+const EDITOR_TOOLS = [
+  ["wall", "Ściana"],
+  ["coin", "Moneta"],
+  ["player", "Gracz"],
+  ["erase", "Gumka"]
+];
+
 export class EditorView {
   constructor(params = {}) {
     this.presetId = params.presetId || null;
     this.preset = params.preset || null;
+    this.presetRepository = params.presetRepository || null;
+    this.presets = params.presets || [];
+    this.activeTool = "wall";
+    this.name = this.preset?.name || "Nowy labirynt";
+    this.width = Number(this.preset?.width || 12);
+    this.height = Number(this.preset?.height || 10);
+    this.playerStart = this.preset?.playerStart ? { ...this.preset.playerStart } : { x: 1, y: 1 };
+    this.walls = new Set((this.preset?.walls || []).map((wall) => this.createPositionKey(wall)));
+    this.coins = new Set((this.preset?.coins || []).map((coin) => this.createPositionKey(coin)));
     this.enemies = this.createInitialEnemies();
   }
 
   render() {
+    if (this.presetId && !this.preset) {
+      return this.createMissingPresetView();
+    }
+
     const section = createElement("section", {
       attributes: {
         "aria-labelledby": "editor-title"
@@ -21,9 +41,10 @@ export class EditorView {
       children: [
         createPageHeader(
           this.presetId ? "Edycja presetu" : "Nowy preset",
-          "Ustaw dane mapy i dodawaj przeciwników z parametrami."
+          "Ustaw dane mapy, klikaj pola planszy i zapisuj gotowe presety."
         ),
         this.createEditorForm(),
+        this.createBoardEditor(),
         this.createEnemyPanel()
       ]
     });
@@ -31,6 +52,33 @@ export class EditorView {
     section.querySelector("h1").id = "editor-title";
 
     return section;
+  }
+
+  createMissingPresetView() {
+    return createElement("section", {
+      className: "py-5",
+      attributes: {
+        "aria-labelledby": "missing-editor-preset-title"
+      },
+      children: [
+        createElement("h1", {
+          className: "h3 mb-3",
+          id: "missing-editor-preset-title",
+          text: "Nie znaleziono presetu"
+        }),
+        createElement("p", {
+          className: "text-body-secondary",
+          text: `Preset ${this.presetId} nie istnieje albo został usunięty.`
+        }),
+        createElement("a", {
+          className: "btn btn-primary",
+          attributes: {
+            href: "#/presets"
+          },
+          text: "Wróć do presetów"
+        })
+      ]
+    });
   }
 
   createInitialEnemies() {
@@ -65,9 +113,9 @@ export class EditorView {
             createElement("div", {
               className: "row g-3",
               children: [
-                this.createInput("Nazwa presetu", "presetName", "text", this.preset?.name || "Klasyczny labirynt"),
-                this.createInput("Szerokość", "presetWidth", "number", String(this.preset?.width || 12)),
-                this.createInput("Wysokość", "presetHeight", "number", String(this.preset?.height || 10))
+                this.createInput("Nazwa presetu", "presetName", "text", this.name),
+                this.createInput("Szerokość", "presetWidth", "number", String(this.width), "6", "20"),
+                this.createInput("Wysokość", "presetHeight", "number", String(this.height), "6", "20")
               ]
             }),
             createElement("div", {
@@ -79,6 +127,14 @@ export class EditorView {
                     type: "submit"
                   },
                   text: "Zapisz preset"
+                }),
+                createElement("button", {
+                  className: "btn btn-outline-secondary",
+                  attributes: {
+                    type: "button",
+                    "data-map-action": "resize"
+                  },
+                  text: "Odśwież rozmiar"
                 }),
                 createElement("a", {
                   className: "btn btn-outline-secondary",
@@ -96,21 +152,39 @@ export class EditorView {
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      this.showFormMessage(form, "Zapis całego presetu zostanie podłączony w etapie edytora map.", "info");
+      this.handlePresetSubmit(form);
+    });
+
+    form.addEventListener("click", (event) => {
+      const actionButton = event.target.closest("[data-map-action]");
+
+      if (actionButton?.dataset.mapAction === "resize") {
+        this.handleResize(form);
+      }
     });
 
     return form;
   }
 
-  createInput(labelText, id, type, value) {
+  createInput(labelText, id, type, value, min = null, max = null) {
+    const attributes = {
+      id,
+      name: id,
+      type,
+      value
+    };
+
+    if (min !== null) {
+      attributes.min = min;
+    }
+
+    if (max !== null) {
+      attributes.max = max;
+    }
+
     const input = createElement("input", {
       className: "form-control",
-      attributes: {
-        id,
-        name: id,
-        type,
-        value
-      }
+      attributes
     });
 
     return createElement("div", {
@@ -132,6 +206,184 @@ export class EditorView {
         })
       ]
     });
+  }
+
+  createBoardEditor() {
+    const board = createElement("div", {
+      className: "editor-board",
+      attributes: {
+        "aria-label": "Edytor planszy",
+        "data-editor-board": "true",
+        "data-board-width": String(this.width)
+      },
+      children: this.createEditorCells()
+    });
+
+    board.addEventListener("click", (event) => {
+      const cell = event.target.closest("[data-editor-cell]");
+
+      if (!cell) {
+        return;
+      }
+
+      this.applyToolToPosition({
+        x: Number(cell.dataset.x),
+        y: Number(cell.dataset.y)
+      });
+      this.refreshBoard();
+      this.refreshEnemyList(document.querySelector("[data-enemy-list-wrapper]"));
+    });
+
+    return createElement("section", {
+      className: "card mb-4",
+      attributes: {
+        "aria-labelledby": "board-editor-title"
+      },
+      children: [
+        createElement("div", {
+          className: "card-body",
+          children: [
+            createElement("div", {
+              className: "d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3",
+              children: [
+                createElement("div", {
+                  children: [
+                    createElement("h2", {
+                      className: "h5 mb-1",
+                      id: "board-editor-title",
+                      text: "Plansza"
+                    }),
+                    createElement("p", {
+                      className: "text-body-secondary mb-0",
+                      text: "Wybierz narzędzie i kliknij pole."
+                    })
+                  ]
+                }),
+                this.createToolButtons()
+              ]
+            }),
+            board
+          ]
+        })
+      ]
+    });
+  }
+
+  createToolButtons() {
+    const group = createElement("div", {
+      className: "btn-group flex-wrap",
+      attributes: {
+        role: "group",
+        "aria-label": "Narzędzia edytora"
+      },
+      children: EDITOR_TOOLS.map(([tool, label]) => createElement("button", {
+        className: tool === this.activeTool ? "btn btn-primary" : "btn btn-outline-primary",
+        attributes: {
+          type: "button",
+          "data-editor-tool": tool
+        },
+        text: label
+      }))
+    });
+
+    group.addEventListener("click", (event) => {
+      const toolButton = event.target.closest("[data-editor-tool]");
+
+      if (!toolButton) {
+        return;
+      }
+
+      this.activeTool = toolButton.dataset.editorTool;
+      group.querySelectorAll("[data-editor-tool]").forEach((button) => {
+        const isActive = button.dataset.editorTool === this.activeTool;
+        button.classList.toggle("btn-primary", isActive);
+        button.classList.toggle("btn-outline-primary", !isActive);
+      });
+    });
+
+    return group;
+  }
+
+  createEditorCells() {
+    const cells = [];
+
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        cells.push(this.createEditorCell({ x, y }));
+      }
+    }
+
+    return cells;
+  }
+
+  createEditorCell(position) {
+    const key = this.createPositionKey(position);
+    const classes = ["editor-cell"];
+    let label = "Puste pole";
+
+    if (this.walls.has(key)) {
+      classes.push("editor-cell-wall");
+      label = "Ściana";
+    } else if (this.coins.has(key)) {
+      classes.push("editor-cell-coin");
+      label = "Moneta";
+    } else if (this.isPlayerStart(position)) {
+      classes.push("editor-cell-player");
+      label = "Gracz";
+    } else if (this.isEnemyStart(position)) {
+      classes.push("editor-cell-enemy");
+      label = "Przeciwnik";
+    }
+
+    return createElement("button", {
+      className: classes.join(" "),
+      attributes: {
+        type: "button",
+        "aria-label": label,
+        "data-editor-cell": "true",
+        "data-x": String(position.x),
+        "data-y": String(position.y)
+      }
+    });
+  }
+
+  applyToolToPosition(position) {
+    const key = this.createPositionKey(position);
+
+    if (this.activeTool === "wall") {
+      this.removeCoin(position);
+      this.removeEnemyAt(position);
+
+      if (this.isPlayerStart(position)) {
+        this.playerStart = null;
+      }
+
+      this.walls.add(key);
+      return;
+    }
+
+    if (this.activeTool === "coin") {
+      this.walls.delete(key);
+      this.removeEnemyAt(position);
+      this.coins.add(key);
+      return;
+    }
+
+    if (this.activeTool === "player") {
+      this.walls.delete(key);
+      this.removeCoin(position);
+      this.removeEnemyAt(position);
+      this.playerStart = { ...position };
+      return;
+    }
+
+    this.walls.delete(key);
+    this.removeCoin(position);
+    this.removeEnemyAt(position);
+
+    if (this.isPlayerStart(position)) {
+      this.playerStart = null;
+    }
   }
 
   createEnemyPanel() {
@@ -292,6 +544,7 @@ export class EditorView {
       if (actionButton.dataset.enemyAction === "remove") {
         this.enemies = this.enemies.filter((enemy) => enemy.id !== actionButton.dataset.enemyId);
         this.refreshEnemyList(wrapper);
+        this.refreshBoard();
         this.showEnemyMessage(wrapper, "Przeciwnik został usunięty.", "info");
       }
     });
@@ -378,14 +631,92 @@ export class EditorView {
       return;
     }
 
+    this.walls.delete(this.createPositionKey(enemy.start));
+    this.removeCoin(enemy.start);
     this.enemies = [...this.enemies, enemy];
     this.refreshEnemyList(form.closest(".card-body").querySelector("[data-enemy-list-wrapper]"));
+    this.refreshBoard();
     this.showEnemyMessage(form.closest(".card-body"), "Przeciwnik został dodany.", "success");
     form.reset();
     form.elements.enemySpeed.value = "1";
     form.elements.enemyIntelligence.value = "4";
     form.elements.enemyX.value = "1";
     form.elements.enemyY.value = "1";
+  }
+
+  async handlePresetSubmit(form) {
+    this.clearValidation(form);
+    this.syncMapFields(form);
+
+    const errors = this.validatePreset(form);
+
+    if (Object.keys(errors).length > 0) {
+      this.showValidationErrors(form, errors);
+      this.showFormMessage(form, "Popraw błędy formularza przed zapisem.", "danger");
+      return;
+    }
+
+    const preset = this.createPresetFromState();
+
+    try {
+      await this.presetRepository.save(preset);
+      this.showFormMessage(form, "Preset został zapisany w localStorage.", "success");
+      window.location.hash = "#/presets";
+    } catch (error) {
+      this.showFormMessage(form, error.message, "danger");
+    }
+  }
+
+  handleResize(form) {
+    this.clearValidation(form);
+    this.syncMapFields(form);
+
+    const errors = this.validateMapFields(form);
+
+    if (Object.keys(errors).length > 0) {
+      this.showValidationErrors(form, errors);
+      return;
+    }
+
+    this.trimStateToBounds();
+    this.refreshEnemyList(document.querySelector("[data-enemy-list-wrapper]"));
+    this.refreshBoard();
+    this.showFormMessage(form, "Rozmiar planszy został odświeżony.", "info");
+  }
+
+  validatePreset(form) {
+    const errors = this.validateMapFields(form);
+
+    if (!this.playerStart) {
+      errors.presetName = errors.presetName || "Mapa musi mieć ustawioną pozycję gracza.";
+    }
+
+    if (this.coins.size === 0) {
+      errors.presetName = errors.presetName || "Mapa musi mieć co najmniej jedną monetę.";
+    }
+
+    return errors;
+  }
+
+  validateMapFields(form) {
+    const errors = {};
+    const name = form.elements.presetName.value.trim();
+    const width = Number(form.elements.presetWidth.value);
+    const height = Number(form.elements.presetHeight.value);
+
+    if (name.length < 3 || name.length > 40) {
+      errors.presetName = "Nazwa musi mieć od 3 do 40 znaków.";
+    }
+
+    if (!Number.isInteger(width) || width < 6 || width > 20) {
+      errors.presetWidth = "Szerokość musi być liczbą od 6 do 20.";
+    }
+
+    if (!Number.isInteger(height) || height < 6 || height > 20) {
+      errors.presetHeight = "Wysokość musi być liczbą od 6 do 20.";
+    }
+
+    return errors;
   }
 
   validateEnemy(enemy) {
@@ -430,27 +761,95 @@ export class EditorView {
     return errors;
   }
 
-  getMapSize() {
-    const form = document.querySelector("[data-map-form]");
-    const width = Number(form?.elements.presetWidth.value || this.preset?.width || 12);
-    const height = Number(form?.elements.presetHeight.value || this.preset?.height || 10);
-
+  createPresetFromState() {
     return {
-      width: Number.isInteger(width) && width > 0 ? width : 12,
-      height: Number.isInteger(height) && height > 0 ? height : 10
+      id: this.preset?.id || this.createPresetId(this.name),
+      name: this.name,
+      width: this.width,
+      height: this.height,
+      playerStart: { ...this.playerStart },
+      walls: this.setToPositions(this.walls),
+      coins: this.setToPositions(this.coins),
+      enemies: this.enemies.map((enemy) => ({
+        id: enemy.id,
+        type: enemy.type,
+        speed: enemy.speed,
+        intelligence: enemy.intelligence,
+        start: { ...enemy.start }
+      }))
     };
   }
 
-  isWall(position) {
-    return Boolean(this.preset?.walls?.some((wall) => wall.x === position.x && wall.y === position.y));
+  createPresetId(name) {
+    const slug = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 32) || "preset";
+
+    let candidate = slug;
+    let counter = 1;
+
+    while (this.presets.some((preset) => preset.id === candidate)) {
+      counter += 1;
+      candidate = `${slug}-${counter}`;
+    }
+
+    return candidate;
   }
 
-  isPlayerStart(position) {
-    return this.preset?.playerStart?.x === position.x && this.preset?.playerStart?.y === position.y;
+  syncMapFields(form) {
+    this.name = form.elements.presetName.value.trim();
+    this.width = Number(form.elements.presetWidth.value);
+    this.height = Number(form.elements.presetHeight.value);
   }
 
-  isEnemyStart(position) {
-    return this.enemies.some((enemy) => enemy.start.x === position.x && enemy.start.y === position.y);
+  trimStateToBounds() {
+    const isInBounds = (position) => position.x >= 0 && position.y >= 0 && position.x < this.width && position.y < this.height;
+    this.walls = this.filterPositionSet(this.walls, isInBounds);
+    this.coins = this.filterPositionSet(this.coins, isInBounds);
+    this.enemies = this.enemies.filter((enemy) => isInBounds(enemy.start));
+
+    if (this.playerStart && !isInBounds(this.playerStart)) {
+      this.playerStart = null;
+    }
+  }
+
+  filterPositionSet(positionSet, predicate) {
+    return new Set([...positionSet].filter((key) => predicate(this.keyToPosition(key))));
+  }
+
+  getMapSize() {
+    const form = document.querySelector("[data-map-form]");
+    const width = Number(form?.elements.presetWidth.value || this.width);
+    const height = Number(form?.elements.presetHeight.value || this.height);
+
+    return {
+      width: Number.isInteger(width) && width > 0 ? width : this.width,
+      height: Number.isInteger(height) && height > 0 ? height : this.height
+    };
+  }
+
+  refreshBoard() {
+    const board = document.querySelector("[data-editor-board]");
+
+    if (!board) {
+      return;
+    }
+
+    board.dataset.boardWidth = String(this.width);
+    board.replaceChildren(...this.createEditorCells());
+  }
+
+  refreshEnemyList(wrapper) {
+    if (!wrapper) {
+      return;
+    }
+
+    const currentList = wrapper.querySelector("[data-enemy-list], [data-enemy-empty]");
+    currentList.replaceWith(this.renderEnemyList());
   }
 
   clearValidation(form) {
@@ -471,11 +870,6 @@ export class EditorView {
         error.textContent = message;
       }
     });
-  }
-
-  refreshEnemyList(wrapper) {
-    const currentList = wrapper.querySelector("[data-enemy-list], [data-enemy-empty]");
-    currentList.replaceWith(this.renderEnemyList());
   }
 
   showFormMessage(form, message, type = "info") {
@@ -503,5 +897,42 @@ export class EditorView {
     alert.classList.add("mt-3", "mb-0");
     alert.dataset.enemyMessage = "true";
     cardBody.appendChild(alert);
+  }
+
+  removeCoin(position) {
+    this.coins.delete(this.createPositionKey(position));
+  }
+
+  removeEnemyAt(position) {
+    this.enemies = this.enemies.filter((enemy) => !this.isSamePosition(enemy.start, position));
+  }
+
+  isWall(position) {
+    return this.walls.has(this.createPositionKey(position));
+  }
+
+  isPlayerStart(position) {
+    return this.playerStart?.x === position.x && this.playerStart?.y === position.y;
+  }
+
+  isEnemyStart(position) {
+    return this.enemies.some((enemy) => this.isSamePosition(enemy.start, position));
+  }
+
+  isSamePosition(firstPosition, secondPosition) {
+    return firstPosition.x === secondPosition.x && firstPosition.y === secondPosition.y;
+  }
+
+  setToPositions(positionSet) {
+    return [...positionSet].map((key) => this.keyToPosition(key));
+  }
+
+  keyToPosition(key) {
+    const [x, y] = key.split(":").map(Number);
+    return { x, y };
+  }
+
+  createPositionKey({ x, y }) {
+    return `${x}:${y}`;
   }
 }

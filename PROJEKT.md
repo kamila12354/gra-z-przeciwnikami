@@ -53,7 +53,7 @@ assets/
 5. Monety i HUD - gotowe.
 6. Przeciwnicy - gotowe.
 7. Formularz i lista przeciwników - gotowe.
-8. Edytor presetów.
-9. Statystyki rozgrywek.
+8. Edytor presetów - gotowe.
+9. Statystyki rozgrywek - gotowe.
 10. Responsywność, błędy i dopracowanie UI.
 11. README, screenshoty i przygotowanie do obrony.
