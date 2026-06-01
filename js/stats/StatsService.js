@@ -1,19 +1,25 @@
 export class StatsService {
   constructor(storageService) {
+    // Serwis odpowiedzialny za zapis statystyk
     this.storageService = storageService;
+
+    // Lista zapisanych wyników gier
     this.stats = [];
   }
 
   setStats(stats) {
+    // Aktualizacja statystyk w pamięci aplikacji
     this.stats = [...stats];
   }
 
   getAll() {
+    // Zwraca wszystkie zapisane statystyki
     return [...this.stats];
   }
 
   getSummary() {
-    return this.stats.reduce((summary, entry) => {//liczy podsumowanie wszystkich gier
+    // Tworzy podsumowanie wszystkich rozegranych gier
+    return this.stats.reduce((summary, entry) => {
       const isWin = entry.result === "wygrana";
 
       return {
@@ -35,6 +41,7 @@ export class StatsService {
   }
 
   async addResult(result) {
+    // Dodanie nowego wyniku gry do statystyk
     const entry = {
       id: crypto.randomUUID(),
       finishedAt: new Date().toISOString(),
@@ -42,13 +49,19 @@ export class StatsService {
     };
 
     this.stats = [entry, ...this.stats];
+
+    // Zapis statystyk w pamięci trwałej
     await this.storageService.saveStats(this.stats);
+
     return entry;
   }
 
   async clearAll() {
+    // Usunięcie wszystkich zapisanych statystyk
     this.stats = [];
+
     await this.storageService.saveStats(this.stats);
+
     return this.getAll();
   }
 }

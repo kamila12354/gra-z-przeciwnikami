@@ -1,12 +1,12 @@
 import { createAlert, createElement, createEmptyState, createPageHeader } from "./dom.js";
 
-export class StatsView {
-  constructor({ statsService }) {
+export class StatsView { //widok odpowiedzialny za wyswietlenie statysyk
+  constructor({ statsService }) {// Serwis przechowujący statystyki
     this.statsService = statsService;
     this.stats = statsService.getAll();
   }
 
-  render() {
+  render() { // Generowanie głównego widoku statystyk
     const clearButton = createElement("button", {
       className: "btn btn-outline-danger",
       attributes: {
@@ -30,13 +30,14 @@ export class StatsView {
     });
 
     section.querySelector("h1").id = "stats-title";
+    // Obsługa akcji użytkownika
     section.addEventListener("click", (event) => this.handleStatsClick(event, section));
     this.renderStatsContent(section);
 
     return section;
   }
 
-  renderStatsContent(section) {
+  renderStatsContent(section) { // Renderowanie zawartości statystyk
     section.querySelector("[data-stats-content]")?.remove();
 
     const content = createElement("div", {
@@ -45,7 +46,7 @@ export class StatsView {
       }
     });
 
-    if (this.stats.length === 0) {
+    if (this.stats.length === 0) { // Wyświetlenie pustego stanu
       content.appendChild(createEmptyState(
         "Brak zapisanych rozgrywek",
         "Statystyki zostaną dodane po pierwszej wygranej albo przegranej partii."
@@ -59,7 +60,7 @@ export class StatsView {
     section.appendChild(content);
   }
 
-  createSummary() {
+  createSummary() {  // Tworzenie podsumowania statystyk
     const summary = this.statsService.getSummary();
     const averageTime = summary.games > 0 ? Math.round(summary.seconds / summary.games) : 0;
     const summaryItems = [
@@ -100,7 +101,7 @@ export class StatsView {
     });
   }
 
-  createStatsList() {
+  createStatsList() { // Tworzenie listy rozegranych gier
     return createElement("section", {
       attributes: {
         "aria-labelledby": "stats-list-title"
@@ -119,7 +120,7 @@ export class StatsView {
     });
   }
 
-  createStatsItem(entry) {
+  createStatsItem(entry) { // Tworzenie pojedynczego wpisu statystyk
     const detailsId = `stats-details-${entry.id}`;
     const resultClass = entry.result === "wygrana" ? "text-success" : "text-danger";
 
@@ -175,7 +176,7 @@ export class StatsView {
     });
   }
 
-  createDetails(entry, detailsId) {
+  createDetails(entry, detailsId) {  // Tworzenie szczegółów pojedynczej gry
     const details = [
       ["Id presetu", entry.presetId || "brak"],
       ["Wynik", entry.result || "brak danych"],
@@ -205,7 +206,7 @@ export class StatsView {
     });
   }
 
-  async handleStatsClick(event, section) {
+  async handleStatsClick(event, section) { // Obsługa przycisków statystyk
     const actionButton = event.target.closest("[data-stats-action]");
 
     if (!actionButton) {
@@ -222,7 +223,7 @@ export class StatsView {
     }
   }
 
-  toggleDetails(button) {
+  toggleDetails(button) { // Pokazywanie i ukrywanie szczegółów gry
     const details = document.getElementById(button.dataset.detailsId);
 
     if (!details) {
@@ -234,7 +235,7 @@ export class StatsView {
     button.textContent = isHidden ? "Szczegóły" : "Ukryj";
   }
 
-  async clearStats(section) {
+  async clearStats(section) { // Czyszczenie wszystkich statystyk
     try {
       this.stats = await this.statsService.clearAll();
       this.showMessage(section, "Statystyki zostały wyczyszczone.", "info");
@@ -244,14 +245,14 @@ export class StatsView {
     }
   }
 
-  showMessage(section, message, type) {
+  showMessage(section, message, type) { // Wyświetlanie komunikatu użytkownikowi
     section.querySelector("[data-stats-message]")?.remove();
     const alert = createAlert(message, type);
     alert.dataset.statsMessage = "true";
     section.querySelector(".page-heading").after(alert);
   }
 
-  formatDuration(totalSeconds) {
+  formatDuration(totalSeconds) {  // Formatowanie czasu MM:SS
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
     const seconds = (totalSeconds % 60).toString().padStart(2, "0");
     return `${minutes}:${seconds}`;

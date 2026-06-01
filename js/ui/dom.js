@@ -1,5 +1,7 @@
+// Tworzenie elementów HTML z poziomu JavaScript
 export function createElement(tagName, options = {}) {
-  const element = document.createElement(tagName);//tworzy nowe elementy html z poziomu js
+  const element = document.createElement(tagName);
+
   const {
     attributes = {},
     children = [],
@@ -7,25 +9,30 @@ export function createElement(tagName, options = {}) {
     text = ""
   } = options;
 
+  // Nadanie klas CSS
   if (className) {
     element.className = className;
   }
 
+  // Ustawienie tekstu elementu
   if (text) {
-    element.textContent = text;//zmienia tekst elemntu
+    element.textContent = text;
   }
 
+  // Dodanie atrybutów HTML
   Object.entries(attributes).forEach(([name, value]) => {
     element.setAttribute(name, value);
   });
 
+  // Dodanie elementów potomnych
   children.forEach((child) => {
-    element.appendChild(child);//dodaje elementy do innego elemntu
+    element.appendChild(child);
   });
 
   return element;
 }
 
+// Tworzenie nagłówka strony
 export function createPageHeader(title, description, actions = []) {
   const textColumn = createElement("div", {
     children: [
@@ -42,6 +49,7 @@ export function createPageHeader(title, description, actions = []) {
 
   const headerChildren = [textColumn];
 
+  // Dodanie przycisków akcji jeśli istnieją
   if (actions.length > 0) {
     headerChildren.push(createElement("div", {
       className: "d-flex flex-wrap gap-2",
@@ -55,6 +63,7 @@ export function createPageHeader(title, description, actions = []) {
   });
 }
 
+// Widok wyświetlany gdy brak danych
 export function createEmptyState(title, description) {
   return createElement("section", {
     className: "empty-state text-center border rounded bg-white p-4 p-md-5",
@@ -74,6 +83,7 @@ export function createEmptyState(title, description) {
   });
 }
 
+// Tworzenie komunikatu informacyjnego lub błędu
 export function createAlert(message, type = "info") {
   return createElement("div", {
     className: `alert alert-${type}`,
@@ -84,6 +94,7 @@ export function createAlert(message, type = "info") {
   });
 }
 
+// Widok ładowania danych aplikacji
 export function createLoadingView(message = "Ładowanie danych aplikacji...") {
   return createElement("section", {
     className: "text-center py-5",
@@ -106,6 +117,7 @@ export function createLoadingView(message = "Ładowanie danych aplikacji...") {
   });
 }
 
+// Widok błędu uruchomienia aplikacji
 export function createErrorView(message) {
   return createElement("section", {
     className: "py-5",

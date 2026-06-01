@@ -1,12 +1,16 @@
 import { createAlert, createElement, createEmptyState, createPageHeader } from "./dom.js";
 
+// Widok wyświetlający listę dostępnych presetów map
 export class PresetListView {
   constructor({ presetRepository }) {
+    // Repozytorium przechowujące presety
     this.presetRepository = presetRepository;
   }
 
+  // Generowanie widoku listy presetów
   render() {
     const presets = this.presetRepository.getAll();
+
     const addButton = createElement("a", {
       className: "btn btn-primary",
       attributes: {
@@ -21,9 +25,9 @@ export class PresetListView {
       },
       children: [
         createPageHeader(
-          "Presety map",
-          "Wybierz mapę do gry albo przejdź do edytora, aby przygotować własny układ.",
-          [addButton]
+            "Presety map",
+            "Wybierz mapę do gry albo przejdź do edytora, aby przygotować własny układ.",
+            [addButton]
         )
       ]
     });
@@ -41,6 +45,7 @@ export class PresetListView {
       list.appendChild(this.createPresetCard(preset));
     });
 
+    // Obsługa usuwania presetów
     list.addEventListener("click", async (event) => {
       const actionButton = event.target.closest("[data-preset-action]");
 
@@ -56,26 +61,39 @@ export class PresetListView {
         try {
           await this.presetRepository.deleteById(presetId);
           actionButton.closest("[data-preset-card]").remove();
-          this.showListMessage(section, `Preset ${presetId} został usunięty.`);
+
+          this.showListMessage(
+              section,
+              `Preset ${presetId} został usunięty.`
+          );
+
           this.toggleEmptyState(section);
         } catch (error) {
-          this.showListMessage(section, error.message, "danger");
+          this.showListMessage(
+              section,
+              error.message,
+              "danger"
+          );
         }
       }
     });
 
     section.appendChild(list);
 
+    // Wyświetlenie komunikatu gdy brak presetów
     if (presets.length === 0) {
-      section.appendChild(createEmptyState(
-        "Brak presetów",
-        "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
-      ));
+      section.appendChild(
+          createEmptyState(
+              "Brak presetów",
+              "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
+          )
+      );
     }
 
     return section;
   }
 
+  // Tworzenie pojedynczej karty presetu
   createPresetCard(preset) {
     return createElement("article", {
       className: "col-12 col-md-6 col-xl-4",
@@ -87,7 +105,7 @@ export class PresetListView {
           className: "preset-card",
           children: [
 
-            // TOP BAR
+            // Nagłówek karty
             createElement("div", {
               className: "preset-card-top",
               children: [
@@ -103,7 +121,7 @@ export class PresetListView {
               ]
             }),
 
-            // PREVIEW
+            // Podgląd mapy
             createElement("div", {
               className: "preset-preview",
               children: [
@@ -113,7 +131,7 @@ export class PresetListView {
               ]
             }),
 
-            // CONTENT
+            // Informacje o presecie
             createElement("div", {
               className: "preset-content",
               children: [
@@ -142,6 +160,7 @@ export class PresetListView {
                   ]
                 }),
 
+                // Przyciski akcji
                 createElement("div", {
                   className: "preset-actions",
                   children: [
@@ -180,6 +199,7 @@ export class PresetListView {
     });
   }
 
+  // Wyświetlenie komunikatu użytkownikowi
   showListMessage(section, message, type = "info") {
     const existingMessage = section.querySelector("[data-view-message]");
 
@@ -190,9 +210,13 @@ export class PresetListView {
     const alert = createAlert(message, type);
     alert.dataset.viewMessage = "true";
 
-    section.insertBefore(alert, section.querySelector("[data-preset-list]"));
+    section.insertBefore(
+        alert,
+        section.querySelector("[data-preset-list]")
+    );
   }
 
+  // Wyświetlenie pustego stanu gdy brak presetów
   toggleEmptyState(section) {
     const list = section.querySelector("[data-preset-list]");
 
@@ -200,9 +224,11 @@ export class PresetListView {
       return;
     }
 
-    section.appendChild(createEmptyState(
-      "Brak presetów",
-      "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
-    ));
+    section.appendChild(
+        createEmptyState(
+            "Brak presetów",
+            "Dodaj pierwszy preset, żeby rozpocząć testowanie gry."
+        )
+    );
   }
 }

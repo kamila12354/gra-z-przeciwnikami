@@ -1,12 +1,15 @@
-const PRESETS_KEY = "mazeEnemiesGame.presets";//klucz do przechowywania presetow w localStorage
-const STATS_KEY = "mazeEnemiesGame.stats";//do statystyk
+const PRESETS_KEY = "mazeEnemiesGame.presets"; // klucz do przechowywania presetów w localStorage
+const STATS_KEY = "mazeEnemiesGame.stats"; // klucz do przechowywania statystyk
 
-export class StorageService {//zapis i odczyt danych
-  constructor({ defaultPresetsUrl = "data/default-presets.json" } = {}) {//domyslna sciezka pliku z mapami
+export class StorageService { // obsługa zapisu i odczytu danych aplikacji
+
+  constructor({ defaultPresetsUrl = "data/default-presets.json" } = {}) {
+    // ścieżka do pliku z domyślnymi mapami
     this.defaultPresetsUrl = defaultPresetsUrl;
   }
 
-  async loadAppData() {//wczytuje dane aplikacji
+  async loadAppData() {
+    // jednoczesne wczytanie presetów i statystyk
     const [presets, stats] = await Promise.all([
       this.getPresets(),
       this.getStats()
@@ -15,38 +18,49 @@ export class StorageService {//zapis i odczyt danych
     return { presets, stats };
   }
 
-  async getPresets() {//pobiera presety map
-    const storedPresets = this.readJson(PRESETS_KEY, null);//odczytuje presety z localstorage
+  async getPresets() {
+    // próba pobrania zapisanych map z localStorage
+    const storedPresets = this.readJson(PRESETS_KEY, null);
 
-    if (Array.isArray(storedPresets) && storedPresets.length > 0) {//czy istnieja zapisane mapy
+    if (Array.isArray(storedPresets) && storedPresets.length > 0) {
       return storedPresets;
     }
 
-    const defaultPresets = await this.fetchDefaultPresets();//pobiera domyslne mapy
-    await this.savePresets(defaultPresets);//zapisuje
+    // jeśli brak zapisanych map, pobiera domyślne
+    const defaultPresets = await this.fetchDefaultPresets();
+    await this.savePresets(defaultPresets);
+
     return defaultPresets;
   }
 
-  async savePresets(presets) {//zapisuje presety
-    if (!Array.isArray(presets)) {//czy przekazano tablice
+  async savePresets(presets) {
+    // zapis presetów do localStorage
+    if (!Array.isArray(presets)) {
       throw new Error("Lista presetów ma niepoprawny format.");
     }
 
-    this.writeJson(PRESETS_KEY, presets);//zapisuje dane do localstorage
+    this.writeJson(PRESETS_KEY, presets);
     return presets;
   }
 
-  async deletePreset(presetId) {//usuwa presety o podanym id
+  async deletePreset(presetId) {
+    // usunięcie wybranego presetu
     const presets = await this.getPresets();
-    const filteredPresets = presets.filter((preset) => preset.id !== presetId);//usuwa wybrany preset
+
+    const filteredPresets = presets.filter(
+        (preset) => preset.id !== presetId
+    );
+
     await this.savePresets(filteredPresets);
-    return filteredPresets;//zwraca liste po usunieciu
+
+    return filteredPresets;
   }
 
   async getStats() {
+    // pobranie zapisanych statystyk
     const stats = this.readJson(STATS_KEY, []);
 
-    if (!Array.isArray(stats)) {//sprawdza poprawnosc danych
+    if (!Array.isArray(stats)) {
       return [];
     }
 
@@ -54,51 +68,58 @@ export class StorageService {//zapis i odczyt danych
   }
 
   async saveStats(stats) {
+    // zapis statystyk do localStorage
     if (!Array.isArray(stats)) {
       throw new Error("Lista statystyk ma niepoprawny format.");
     }
 
     this.writeJson(STATS_KEY, stats);
+
     return stats;
   }
 
-  async fetchDefaultPresets() {//pobiera domysle mapy z pliku json
-    const response = await fetch(this.defaultPresetsUrl);//wysyla zadanie http
+  async fetchDefaultPresets() {
+    // pobranie domyślnych map z pliku JSON
+    const response = await fetch(this.defaultPresetsUrl);
 
-    if (!response.ok) {//czy pobieranie zakonczylo sie sukcesem
+    if (!response.ok) {
       throw new Error(`Nie udało się pobrać presetów. Kod HTTP: ${response.status}.`);
     }
 
-    const presets = await response.json();//zmienia odpowiedzi json na obiekt js
+    // zamiana odpowiedzi JSON na obiekty JavaScript
+    const presets = await response.json();
 
-    if (!Array.isArray(presets)) {//czy plik zwiera tablice map
+    if (!Array.isArray(presets)) {
       throw new Error("Plik z presetami nie zawiera listy map.");
     }
 
     return presets;
   }
 
-  readJson(key, fallbackValue) {//odczytuje dane json z localStorage
+  readJson(key, fallbackValue) {
+    // odczyt danych JSON z localStorage
     try {
-      const rawValue = localStorage.getItem(key);//pobiera tekst
+      const rawValue = localStorage.getItem(key);
 
-      if (rawValue === null) {//czy dane istnieja
-        return fallbackValue;//jesli nie istnieje zwraca wartosc domysla
+      if (rawValue === null) {
+        return fallbackValue;
       }
 
-      return JSON.parse(rawValue);//zmienia tekst json na obiekt js
-    } catch (error) {//gdy dane uszkodzone
-      localStorage.removeItem(key);//usuwa niepoprawne dane
-      return fallbackValue;//wartosc domyslna
+      return JSON.parse(rawValue);
+    } catch (error) {
+      // usunięcie uszkodzonych danych
+      localStorage.removeItem(key);
+
+      return fallbackValue;
     }
   }
 
-  writeJson(key, value) {//zapisuje dane do localStorage
+  writeJson(key, value) {
+    // zapis danych do localStorage
     try {
-      localStorage.setItem(key, JSON.stringify(value));//zmienia obiekt na json i zapisuje go
+      localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       throw new Error("Nie udało się zapisać danych w localStorage.");
     }
   }
 }
-

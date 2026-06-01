@@ -13,8 +13,9 @@ const EDITOR_TOOLS = [
   ["erase", "Gumka"]
 ];
 
+//widok edytora map umozliwiajacy tworzenie i modyfikowanie presetow
 export class EditorView {
-  constructor(params = {}) {
+  constructor(params = {}) { // Inicjalizacja danych edytora i aktualnego presetu
     this.presetId = params.presetId || null;
     this.preset = params.preset || null;
     this.presetRepository = params.presetRepository || null;
@@ -29,7 +30,7 @@ export class EditorView {
     this.enemies = this.createInitialEnemies();
   }
 
-  render() {
+  render() { // Generowanie głównego widoku edytora
     if (this.presetId && !this.preset) {
       return this.createMissingPresetView();
     }
@@ -54,7 +55,7 @@ export class EditorView {
     return section;
   }
 
-  createMissingPresetView() {
+  createMissingPresetView() { // Widok wyświetlany gdy preset nie istnieje
     return createElement("section", {
       className: "py-5",
       attributes: {
@@ -81,7 +82,7 @@ export class EditorView {
     });
   }
 
-  createInitialEnemies() {
+  createInitialEnemies() { // Wczytanie przeciwników z edytowanego presetu
     if (!this.preset?.enemies) {
       return [];
     }
@@ -95,7 +96,7 @@ export class EditorView {
     }));
   }
 
-  createEditorForm() {
+  createEditorForm() { // Formularz danych mapy
     const form = createElement("form", {
       className: "card mb-4",
       attributes: {
@@ -208,7 +209,7 @@ export class EditorView {
     });
   }
 
-  createBoardEditor() {
+  createBoardEditor() { // Formularz danych mapy
     const board = createElement("div", {
       className: "editor-board",
       attributes: {
@@ -269,7 +270,7 @@ export class EditorView {
     });
   }
 
-  createToolButtons() {
+  createToolButtons() { // Przyciski narzędzi edytora
     const group = createElement("div", {
       className: "btn-group flex-wrap",
       attributes: {
@@ -304,7 +305,7 @@ export class EditorView {
     return group;
   }
 
-  createEditorCells() {
+  createEditorCells() { // Generowanie pól planszy
     const cells = [];
 
     for (let y = 0; y < this.height; y += 1) {
@@ -316,7 +317,7 @@ export class EditorView {
     return cells;
   }
 
-  createEditorCell(position) {
+  createEditorCell(position) { // Generowanie pól planszy
     const key = this.createPositionKey(position);
     const classes = ["editor-cell"];
     let label = "Puste pole";
@@ -347,7 +348,7 @@ export class EditorView {
     });
   }
 
-  applyToolToPosition(position) {
+  applyToolToPosition(position) { // Generowanie pól planszy
     const key = this.createPositionKey(position);
 
     if (this.activeTool === "wall") {
@@ -386,7 +387,7 @@ export class EditorView {
     }
   }
 
-  createEnemyPanel() {
+  createEnemyPanel() { // Sekcja zarządzania przeciwnikami
     const enemyForm = this.createEnemyForm();
     const enemyList = this.createEnemyList();
 
@@ -413,7 +414,7 @@ export class EditorView {
     });
   }
 
-  createEnemyForm() {
+  createEnemyForm() { // Formularz dodawania przeciwników
     const form = createElement("form", {
       className: "enemy-form",
       attributes: {
@@ -520,7 +521,7 @@ export class EditorView {
     });
   }
 
-  createEnemyList() {
+  createEnemyList() { // Lista przeciwników na mapie
     const wrapper = createElement("div", {
       attributes: {
         "data-enemy-list-wrapper": "true"
@@ -609,7 +610,7 @@ export class EditorView {
     });
   }
 
-  handleEnemySubmit(form) {
+  handleEnemySubmit(form) { // Lista przeciwników na mapie
     this.clearValidation(form);
 
     const formData = new FormData(form);
@@ -644,7 +645,7 @@ export class EditorView {
     form.elements.enemyY.value = "1";
   }
 
-  async handlePresetSubmit(form) {
+  async handlePresetSubmit(form) { // Walidacja i zapis presetu
     this.clearValidation(form);
     this.syncMapFields(form);
 
@@ -667,7 +668,7 @@ export class EditorView {
     }
   }
 
-  handleResize(form) {
+  handleResize(form) { // Zmiana rozmiaru planszy
     this.clearValidation(form);
     this.syncMapFields(form);
 
@@ -684,7 +685,7 @@ export class EditorView {
     this.showFormMessage(form, "Rozmiar planszy został odświeżony.", "info");
   }
 
-  validatePreset(form) {
+  validatePreset(form) { // Zmiana rozmiaru planszy
     const errors = this.validateMapFields(form);
 
     if (!this.playerStart) {
@@ -719,7 +720,7 @@ export class EditorView {
     return errors;
   }
 
-  validateEnemy(enemy) {
+  validateEnemy(enemy) { // Walidacja danych przeciwnika
     const errors = {};
     const mapSize = this.getMapSize();
 
@@ -761,7 +762,7 @@ export class EditorView {
     return errors;
   }
 
-  createPresetFromState() {
+  createPresetFromState() { // Walidacja danych przeciwnika
     return {
       id: this.preset?.id || this.createPresetId(this.name),
       name: this.name,
@@ -780,7 +781,7 @@ export class EditorView {
     };
   }
 
-  createPresetId(name) {
+  createPresetId(name) { // Generowanie unikalnego identyfikatora presetu
     const slug = name
       .toLowerCase()
       .normalize("NFD")
@@ -832,7 +833,7 @@ export class EditorView {
     };
   }
 
-  refreshBoard() {
+  refreshBoard() { // Odświeżenie widoku planszy
     const board = document.querySelector("[data-editor-board]");
 
     if (!board) {
@@ -843,7 +844,7 @@ export class EditorView {
     board.replaceChildren(...this.createEditorCells());
   }
 
-  refreshEnemyList(wrapper) {
+  refreshEnemyList(wrapper) { // Aktualizacja listy przeciwników
     if (!wrapper) {
       return;
     }
@@ -872,7 +873,7 @@ export class EditorView {
     });
   }
 
-  showFormMessage(form, message, type = "info") {
+  showFormMessage(form, message, type = "info") { // Wyświetlenie komunikatu formularza
     const existingMessage = form.querySelector("[data-form-message]");
 
     if (existingMessage) {
@@ -885,7 +886,7 @@ export class EditorView {
     form.querySelector(".card-body").appendChild(alert);
   }
 
-  showEnemyMessage(container, message, type = "info") {
+  showEnemyMessage(container, message, type = "info") { // Wyświetlenie komunikatu dotyczącego przeciwników
     const cardBody = container.closest(".card-body") || container;
     const existingMessage = cardBody.querySelector("[data-enemy-message]");
 
@@ -919,7 +920,7 @@ export class EditorView {
     return this.enemies.some((enemy) => this.isSamePosition(enemy.start, position));
   }
 
-  isSamePosition(firstPosition, secondPosition) {
+  isSamePosition(firstPosition, secondPosition) { // Porównanie dwóch pozycji
     return firstPosition.x === secondPosition.x && firstPosition.y === secondPosition.y;
   }
 
@@ -927,7 +928,7 @@ export class EditorView {
     return [...positionSet].map((key) => this.keyToPosition(key));
   }
 
-  keyToPosition(key) {
+  keyToPosition(key) { // Zamiana współrzędnych na unikalny klucz
     const [x, y] = key.split(":").map(Number);
     return { x, y };
   }

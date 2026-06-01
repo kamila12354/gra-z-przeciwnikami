@@ -8,12 +8,16 @@ import { PresetListView } from "./ui/PresetListView.js";
 import { StatsView } from "./ui/StatsView.js";
 import { createErrorView, createLoadingView } from "./ui/dom.js";
 
-const app = document.querySelector("#app");//szuka elemntu sluzy to wyszukania elemntow html przy uzyciu selektorow css
+// Pobranie głównych elementów interfejsu
+const app = document.querySelector("#app"); //szuka elemntu sluzy to wyszukania elemntow html przy uzyciu selektorow css
 const navLinks = document.querySelectorAll("[data-route-link]");
+
+// Inicjalizacja głównych serwisów aplikacji
 const storageService = new StorageService();
 const presetRepository = new PresetRepository(storageService);
 const statsService = new StatsService(storageService);
 
+// Definicja tras aplikacji SPA
 const routes = [
   {
     pattern: /^#\/presets$/,
@@ -22,6 +26,7 @@ const routes = [
     }).render(),
     title: "Presety"
   },
+
   {
     pattern: /^#\/game\/(?<presetId>[\w-]+)$/,
     render: (params) => new GameView({
@@ -31,6 +36,7 @@ const routes = [
     }).render(),
     title: "Gra"
   },
+
   {
     pattern: /^#\/editor$/,
     render: () => new EditorView({
@@ -39,6 +45,7 @@ const routes = [
     }).render(),
     title: "Edytor"
   },
+
   {
     pattern: /^#\/editor\/(?<presetId>[\w-]+)$/,
     render: (params) => new EditorView({
@@ -49,6 +56,7 @@ const routes = [
     }).render(),
     title: "Edycja presetu"
   },
+
   {
     pattern: /^#\/stats$/,
     render: () => new StatsView({
@@ -58,6 +66,7 @@ const routes = [
   }
 ];
 
+// Utworzenie routera odpowiedzialnego za nawigację
 const router = new Router({
   app,
   defaultRoute: "#/presets",
@@ -65,15 +74,27 @@ const router = new Router({
   routes
 });
 
+// Uruchomienie aplikacji po załadowaniu strony
 document.addEventListener("DOMContentLoaded", async () => {
+
+  // Wyświetlenie ekranu ładowania
   app.replaceChildren(createLoadingView());
 
   try {
+
+    // Wczytanie danych aplikacji
     const { presets, stats } = await storageService.loadAppData();
+
+    // Przekazanie danych do repozytoriów
     presetRepository.setPresets(presets);
     statsService.setStats(stats);
+
+    // Start routera i aplikacji
     router.start();
+
   } catch (error) {
+
+    // Wyświetlenie błędu uruchomienia aplikacji
     app.replaceChildren(createErrorView(error.message));
   }
 });

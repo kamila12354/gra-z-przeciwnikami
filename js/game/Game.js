@@ -68,7 +68,7 @@ export class Game {
     });
   }
 
-  bindTouchControls() {//na telefonie
+  bindTouchControls() {// Obsługa sterowania na urządzeniach mobilnych
     const controls = this.root.querySelector("[data-mobile-controls]");
 
     controls.addEventListener("click", (event) => {
@@ -83,7 +83,7 @@ export class Game {
       signal: this.abortController.signal
     });
   }
-  movePlayer(direction) {
+  movePlayer(direction) {// Realizacja ruchu gracza i sprawdzenie stanu gry
     if (this.isFinished) {
       return;
     }
@@ -127,7 +127,7 @@ export class Game {
     });
   }
 
-  updateHud(status) {
+  updateHud(status) {// Aktualizacja informacji wyświetlanych graczowi
     this.setHudValue("coins", `${this.collectedCoins} / ${this.totalCoins}`);
     this.setHudValue("moves", String(this.moves));
     this.setHudValue("time", this.formatTime(this.elapsedSeconds));
@@ -142,7 +142,7 @@ export class Game {
     }
   }
 
-  startTimer() {
+  startTimer() {// Uruchomienie licznika czasu rozgrywki
     this.timerId = window.setInterval(() => {
       if (!this.startedAt || this.isFinished) {
         return;
@@ -170,7 +170,7 @@ export class Game {
     this.setHudValue("time", this.formatTime(this.elapsedSeconds));
   }
 
-  startEnemyLoop() {
+  startEnemyLoop() {// Uruchomienie cyklicznej aktualizacji przeciwników
     this.enemyLoopId = window.setInterval(() => {
       this.updateEnemies();
     }, 700);
@@ -183,7 +183,7 @@ export class Game {
     }
   }
 
-  updateEnemies() {
+  updateEnemies() {// Aktualizacja ruchu przeciwników i zagrożeń na planszy
     if (this.isFinished) {
       return;
     }
@@ -224,7 +224,7 @@ export class Game {
     this.updateHud("Ruch przeciwnika");
   }
 
-  getPlayerDeathReason(position) {
+  getPlayerDeathReason(position) {// Sprawdzenie warunków przegranej
     if (this.enemies.some((enemy) => this.isSamePosition(enemy.getPosition(), position))) {
       return "Złapany przez przeciwnika";
     }
@@ -240,7 +240,7 @@ export class Game {
     return null;
   }
 
-  async finishWithWin() {
+  async finishWithWin() {// Obsługa zakończenia gry zwycięstwem
     this.isFinished = true;
     this.updateElapsedTime();
     this.stopTimer();
@@ -269,7 +269,7 @@ export class Game {
     }
   }
 
-  async finishWithLoss(deathReason) {
+  async finishWithLoss(deathReason) {// Obsługa zakończenia gry porażką
     this.isFinished = true;
     this.updateElapsedTime();
     this.stopTimer();
@@ -298,7 +298,7 @@ export class Game {
     }
   }
 
-  showEndGameMessage(title, description, type) {
+  showEndGameMessage(title, description, type) {// Wyświetlenie komunikatu końcowego i przycisków akcji
     const existingMessage = this.root.querySelector("[data-game-result]");
 
     if (existingMessage) {
@@ -350,7 +350,7 @@ export class Game {
     this.root.querySelector("[data-game-board]").after(alert);
   }
 
-  restartGame() {
+  restartGame() {// Utworzenie nowej instancji gry
     this.destroy();
 
     const newGame = new Game({
@@ -363,10 +363,12 @@ export class Game {
   }
 
   isSamePosition(firstPosition, secondPosition) {//przyklad pure functions()porownuje pozycje nie zminia ich
+    // Funkcja pomocnicza porównująca pozycje
     return firstPosition.x === secondPosition.x && firstPosition.y === secondPosition.y;
   }
 
   formatTime(totalSeconds) {//przyklad pure functions() zawsze ten sam wynik
+    // Konwersja czasu do formatu MM:SS
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
     const seconds = (totalSeconds % 60).toString().padStart(2, "0");
     return `${minutes}:${seconds}`;

@@ -1,72 +1,88 @@
 export class Enemy {
   constructor(config) {
-    this.id = config.id || crypto.randomUUID();
-    this.type = config.type;
-    this.speed = Number(config.speed) || 1;
-    this.intelligence = Number(config.intelligence) || 1;
-    this.position = { ...config.start };
-    this.energy = 0;
+    this.id = config.id || crypto.randomUUID(); // unikalny identyfikator przeciwnika
+    this.type = config.type; // typ przeciwnika
+    this.speed = Number(config.speed) || 1; // szybkość przeciwnika
+    this.intelligence = Number(config.intelligence) || 1; // poziom inteligencji
+    this.position = { ...config.start }; // pozycja startowa
+    this.energy = 0; // energia potrzebna do wykonania ruchu
   }
 
   update(context) {
+    // główna metoda aktualizacji przeciwnika
     return this.move(context);
   }
 
   move() {
+    // domyślna implementacja ruchu
     return {
       nextPosition: this.getPosition()
     };
   }
 
   getPosition() {
+    // zwraca kopię aktualnej pozycji
     return { ...this.position };
   }
 
   setPosition(position) {
+    // ustawia nową pozycję przeciwnika
     this.position = { ...position };
   }
 
-  canAct() { //czy przeciwknik moze wykonac ruch
-    this.energy += Math.max(this.speed, 1); //dodanie energi zaleznie od szybkosci min 1
+  canAct() {
+    // zwiększa energię w zależności od szybkości
+    this.energy += Math.max(this.speed, 1);
 
-    if (this.energy < 3) {//czy zgormadzono wystarczajaco ilosc energi
+    // jeśli energii jest za mało, przeciwnik nie może wykonać ruchu
+    if (this.energy < 3) {
       return false;
-      //jesli za malo energi nie wykona ruchu
     }
 
-    this.energy = 0; //zeruje po wykonaniu ruchu
+    // po wykonaniu ruchu energia jest zerowana
+    this.energy = 0;
     return true;
-    //pozwala wykonac ruch
   }
 
   getAvailableMoves(collisionService) {
-    //pobiera mozliwe ruchy przeciwnika
+    // możliwe kierunki ruchu
     const directions = [
-      { x: 0, y: -1 },//gora
-      { x: 1, y: 0 },//prawo
-      { x: 0, y: 1 },//dol
-      { x: -1, y: 0 }//lewo
+      { x: 0, y: -1 }, // góra
+      { x: 1, y: 0 },  // prawo
+      { x: 0, y: 1 },  // dół
+      { x: -1, y: 0 }  // lewo
     ];
 
     return directions
-      .map((direction) => ({//zmienia kierunki na konkretne pozycje
-        x: this.position.x + direction.x,//nowy x
-        y: this.position.y + direction.y//nowy y
-      }))
-      .filter((position) => collisionService.canMoveTo(position));//przyklad filter() zostawia pola na ktore mozna wejsc
+        .map((direction) => ({
+          // wyznaczenie nowych współrzędnych
+          x: this.position.x + direction.x,
+          y: this.position.y + direction.y
+        }))
+        .filter((position) =>
+            // pozostawia tylko pola, na które można wejść
+            collisionService.canMoveTo(position)
+        );
   }
 
-  chooseRandomMove(collisionService) {//wybiera losowy ruch
-    const moves = this.getAvailableMoves(collisionService);//pobiera wszystkie mozliwe ruchy
+  chooseRandomMove(collisionService) {
+    // pobiera wszystkie dostępne ruchy
+    const moves = this.getAvailableMoves(collisionService);
 
-    if (moves.length === 0) {//sprawdza czy istnieje jakis ruch
-      return this.getPosition();//pozostaje na obecnym mijscu
+    // jeśli brak możliwych ruchów, pozostaje w miejscu
+    if (moves.length === 0) {
+      return this.getPosition();
     }
 
-    return moves[Math.floor(Math.random() * moves.length)];//losuje jeden dostepny ruch
+    // losuje jeden z dostępnych ruchów
+    return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  calculateDistance(firstPosition, secondPosition) {//przyklad pure functions() oblicza odleglosc miedzy dwoma punktami
-    return Math.abs(firstPosition.x - secondPosition.x) + Math.abs(firstPosition.y - secondPosition.y);
+  calculateDistance(firstPosition, secondPosition) {
+    // oblicza odległość Manhattan między dwoma punktami
+    return (
+        Math.abs(firstPosition.x - secondPosition.x) +
+        Math.abs(firstPosition.y - secondPosition.y)
+    );
   }
 }

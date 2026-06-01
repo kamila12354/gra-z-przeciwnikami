@@ -2,26 +2,46 @@ import { createElement } from "../ui/dom.js";
 
 export class Board {
   constructor(preset) {
+    // Inicjalizacja parametrów planszy na podstawie wybranego presetu
     this.width = preset.width;
     this.height = preset.height;
-    this.walls = new Set(preset.walls.map((wall) => this.createPositionKey(wall)));//przyklad map()przechodzi po scianach i tworzy nowa tablice kluczy
-    this.coins = new Set(preset.coins.map((coin) => this.createPositionKey(coin)));
-    this.enemyStarts = new Set(preset.enemies.map((enemy) => this.createPositionKey(enemy.start)));
+
+    // Przechowywanie ścian, monet i pozycji startowych przeciwników
+    // w strukturze Set dla szybkiego wyszukiwania elementów
+    this.walls = new Set(
+        preset.walls.map((wall) => this.createPositionKey(wall))
+    );
+
+    this.coins = new Set(
+        preset.coins.map((coin) => this.createPositionKey(coin))
+    );
+
+    this.enemyStarts = new Set(
+        preset.enemies.map((enemy) => this.createPositionKey(enemy.start))
+    );
+
+    // Dynamiczne przeszkody i zagrożenia tworzone podczas gry
     this.lavaTrails = new Set();
     this.electricZones = new Set();
+
+    // Pozycja startowa gracza
     this.playerStart = { ...preset.playerStart };
+
+    // Referencja do wygenerowanego elementu HTML planszy
     this.element = null;
   }
 
-  render() {//rusuje cala plansze
+  render() {
+    // Generowanie kompletnej planszy gry
     const cells = [];
 
-    for (let y = 0; y < this.height; y += 1) {//po wierszach
-      for (let x = 0; x < this.width; x += 1) {//po kolumnach
-        cells.push(this.createCell({ x, y }));//tworzy i dodaje pojedyncze pola
+    for (let y = 0; y < this.height; y += 1) {
+      for (let x = 0; x < this.width; x += 1) {
+        cells.push(this.createCell({ x, y }));
       }
     }
 
+    // Utworzenie głównego kontenera planszy
     this.element = createElement("section", {
       className: "game-board mb-4",
       attributes: {
@@ -35,10 +55,12 @@ export class Board {
   }
 
   createCell(position) {
+    // Tworzenie pojedynczego pola planszy
     const key = this.createPositionKey(position);
     const classes = ["board-cell"];
     let label = "Puste pole";
 
+    // Nadanie odpowiedniego typu pola
     if (this.walls.has(key)) {
       classes.push("board-cell-wall");
       label = "Ściana";
@@ -50,6 +72,7 @@ export class Board {
       label = "Pozycja startowa przeciwnika";
     }
 
+    // Oznaczenie pola startowego gracza
     if (this.createPositionKey(this.playerStart) === key) {
       classes.push("board-cell-player");
       label = "Gracz";
@@ -66,16 +89,19 @@ export class Board {
   }
 
   updatePlayerPosition(previousPosition, nextPosition) {
+    // Aktualizacja wizualnej pozycji gracza na planszy
     this.getCell(previousPosition)?.classList.remove("board-cell-player");
-    this.getCell(nextPosition)?.classList.add("board-cell-player");//usuwa klasy css
+    this.getCell(nextPosition)?.classList.add("board-cell-player");
   }
 
   updateEnemyPosition(previousPosition, nextPosition) {
+    // Aktualizacja wizualnej pozycji przeciwnika
     this.getCell(previousPosition)?.classList.remove("board-cell-enemy");
     this.getCell(nextPosition)?.classList.add("board-cell-enemy");
   }
 
-  collectCoinAt(position) {//zbiera monete z pola
+  collectCoinAt(position) {
+    // Obsługa zebrania monety przez gracza
     const key = this.createPositionKey(position);
 
     if (!this.coins.has(key)) {
@@ -86,33 +112,39 @@ export class Board {
 
     const cell = this.getCell(position);
 
-    if (cell) {//sprawdza czy pole istnieje
-      cell.classList.remove("board-cell-coin");//usuwa wyglad monety
-      cell.setAttribute("aria-label", "Gracz");// aktualizuje  opis pola
+    if (cell) {
+      // Usunięcie wizualizacji monety z planszy
+      cell.classList.remove("board-cell-coin");
+      cell.setAttribute("aria-label", "Gracz");
     }
 
-    return true;//informuje o zbieraniu monety
+    return true;
   }
 
-  hasWallAt(position) {//czy na polu sciana
+  hasWallAt(position) {
+    // Sprawdzenie czy na danym polu znajduje się ściana
     return this.walls.has(this.createPositionKey(position));
   }
 
-  isInside({ x, y }) {//czy pozycja miesci sie na planszy
+  isInside({ x, y }) {
+    // Weryfikacja czy współrzędne mieszczą się w granicach planszy
     return x >= 0 && y >= 0 && x < this.width && y < this.height;
   }
 
-  addLavaTrail(position) {//dodaje pole lawy
+  addLavaTrail(position) {
+    // Dodanie pola lawy pozostawionego przez przeciwnika LavaEnemy
     const key = this.createPositionKey(position);
     this.lavaTrails.add(key);
     this.getCell(position)?.classList.add("board-cell-lava");
   }
 
-  hasLavaTrailAt(position) {//czy na polu jest lawa
+  hasLavaTrailAt(position) {
+    // Sprawdzenie czy dane pole zawiera lawę
     return this.lavaTrails.has(this.createPositionKey(position));
   }
 
-  setElectricZones(positions) {//dodaje pole elektryczne
+  setElectricZones(positions) {
+    // Wyznaczenie i oznaczenie pól zagrożonych atakiem elektrycznym
     positions.forEach((position) => {
       const key = this.createPositionKey(position);
       this.electricZones.add(key);
@@ -121,22 +153,31 @@ export class Board {
   }
 
   clearElectricZones() {
+    // Usunięcie wszystkich aktywnych pól elektrycznych
     this.electricZones.forEach((key) => {
       const [x, y] = key.split(":").map(Number);
       this.getCell({ x, y })?.classList.remove("board-cell-electric");
     });
+
     this.electricZones.clear();
   }
 
   hasElectricZoneAt(position) {
+    // Sprawdzenie czy pole znajduje się w strefie elektrycznej
     return this.electricZones.has(this.createPositionKey(position));
   }
 
   getCell({ x, y }) {
-    return this.element?.querySelector(`[data-x="${x}"][data-y="${y}"]`) || null;
+    // Pobranie konkretnego pola planszy z DOM
+    return (
+        this.element?.querySelector(
+            `[data-x="${x}"][data-y="${y}"]`
+        ) || null
+    );
   }
 
-  createPositionKey({ x, y }) {//zmienia wspolrzedne na tekstowy klucz
+  createPositionKey({ x, y }) {
+    // Zamiana współrzędnych na unikalny klucz tekstowy
     return `${x}:${y}`;
   }
 }

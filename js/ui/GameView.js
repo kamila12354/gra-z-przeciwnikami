@@ -1,13 +1,16 @@
 import { Game } from "../game/Game.js";
 import { createElement, createPageHeader } from "./dom.js";
 
+// Widok odpowiedzialny za uruchomienie i wyświetlenie gry
 export class GameView {
   constructor({ presetId, preset, statsService }) {
+    // Inicjalizacja danych potrzebnych do uruchomienia gry
     this.presetId = presetId;
     this.preset = preset;
     this.statsService = statsService;
   }
 
+  // Generowanie głównego widoku gry
   render() {
     if (!this.preset) {
       return this.createMissingPresetView();
@@ -19,8 +22,8 @@ export class GameView {
       },
       children: [
         createPageHeader(
-          this.preset.name,
-          "Poruszaj graczem przy pomocy WASD, strzałek albo przycisków mobilnych."
+            this.preset.name,
+            "Poruszaj graczem przy pomocy WASD, strzałek albo przycisków mobilnych."
         ),
         this.createHud(),
         this.createBoardContainer(),
@@ -30,6 +33,7 @@ export class GameView {
 
     section.querySelector("h1").id = "game-title";
 
+    // Utworzenie instancji gry
     const game = new Game({
       preset: this.preset,
       root: section,
@@ -37,11 +41,14 @@ export class GameView {
     });
 
     section.destroy = () => game.destroy();
+
+    // Uruchomienie gry po wyrenderowaniu widoku
     requestAnimationFrame(() => game.start());
 
     return section;
   }
 
+  // Tworzenie panelu informacyjnego gry (HUD)
   createHud() {
     const hudItems = [
       ["coins", "Monety", `0 / ${this.preset.coins.length}`],
@@ -84,6 +91,7 @@ export class GameView {
     });
   }
 
+  // Kontener przeznaczony na planszę gry
   createBoardContainer() {
     return createElement("div", {
       className: "mb-4",
@@ -93,6 +101,7 @@ export class GameView {
     });
   }
 
+  // Tworzenie przycisków sterowania mobilnego
   createMobileControls() {
     const controls = [
       ["up", "Góra"],
@@ -118,6 +127,7 @@ export class GameView {
     });
   }
 
+  // Widok wyświetlany gdy nie znaleziono wybranego presetu
   createMissingPresetView() {
     return createElement("section", {
       className: "py-5",
