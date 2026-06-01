@@ -4,7 +4,7 @@ export class Player {
   }
 
   getPosition() {
-    return { ...this.position };
+    return { ...this.position };//przyklad niemutowane strukttury danych tworzy kopie obiektu
   }
 
   moveTo(position) {

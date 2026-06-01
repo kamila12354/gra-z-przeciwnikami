@@ -1,15 +1,15 @@
 export class Enemy {
-  constructor(config) {//przyjmuje konfiguracje przeciwnika
-    this.id = config.id || crypto.randomUUID();//id przeciwnika
-    this.type = config.type;//typ przeciwnika
-    this.speed = Number(config.speed) || 1;//szybkosc jesli brak wartosci ustawia 1
-    this.intelligence = Number(config.intelligence) || 1;//poziom inteligencji
-    this.position = { ...config.start };//pozyc ja
-    this.energy = 0; // Tworzy licznik energii używany do wykonywania akcji
+  constructor(config) {
+    this.id = config.id || crypto.randomUUID();
+    this.type = config.type;
+    this.speed = Number(config.speed) || 1;
+    this.intelligence = Number(config.intelligence) || 1;
+    this.position = { ...config.start };
+    this.energy = 0;
   }
 
   update(context) {
-    return this.move(context); //wywolije metode ruchu
+    return this.move(context);
   }
 
   move() {
@@ -26,19 +26,17 @@ export class Enemy {
     this.position = { ...position };
   }
 
-  canAct() {
-    //czy przeciwknik moze wykonac akcje
-    this.energy += Math.max(this.speed, 1);
-    //dodanie energi zaleznie od szybkosci min 1
+  canAct() { //czy przeciwknik moze wykonac ruch
+    this.energy += Math.max(this.speed, 1); //dodanie energi zaleznie od szybkosci min 1
 
-    if (this.energy < 3) {
+    if (this.energy < 3) {//czy zgormadzono wystarczajaco ilosc energi
       return false;
-      //jesli za malo nie wykona ruchu
+      //jesli za malo energi nie wykona ruchu
     }
 
-    this.energy = 0;
+    this.energy = 0; //zeruje po wykonaniu ruchu
     return true;
-    //resetuj energie po wykonaniu akcji
+    //pozwala wykonac ruch
   }
 
   getAvailableMoves(collisionService) {
@@ -51,36 +49,24 @@ export class Enemy {
     ];
 
     return directions
-      .map((direction) => ({
-        //tworzy nowe pozycje dla kazdego kierunku
-        x: this.position.x + direction.x,
-        y: this.position.y + direction.y
+      .map((direction) => ({//zmienia kierunki na konkretne pozycje
+        x: this.position.x + direction.x,//nowy x
+        y: this.position.y + direction.y//nowy y
       }))
-      .filter((position) => collisionService.canMoveTo(position));//zostawia pola na ktore mozna wejsc
+      .filter((position) => collisionService.canMoveTo(position));//przyklad filter() zostawia pola na ktore mozna wejsc
   }
 
-  chooseRandomMove(collisionService) {
-    const moves = this.getAvailableMoves(collisionService);
+  chooseRandomMove(collisionService) {//wybiera losowy ruch
+    const moves = this.getAvailableMoves(collisionService);//pobiera wszystkie mozliwe ruchy
 
-    if (moves.length === 0) {
-      return this.getPosition();
-      //jesli brak ruchu zostaje w miejscu
+    if (moves.length === 0) {//sprawdza czy istnieje jakis ruch
+      return this.getPosition();//pozostaje na obecnym mijscu
     }
 
-    return moves[Math.floor(Math.random() * moves.length)];//zwraca losowy ruch
+    return moves[Math.floor(Math.random() * moves.length)];//losuje jeden dostepny ruch
   }
 
-  calculateDistance(firstPosition, secondPosition) {//oblicza odleglosc miedzy dwoma punktami
+  calculateDistance(firstPosition, secondPosition) {//przyklad pure functions() oblicza odleglosc miedzy dwoma punktami
     return Math.abs(firstPosition.x - secondPosition.x) + Math.abs(firstPosition.y - secondPosition.y);
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      type: this.type,
-      speed: this.speed,
-      intelligence: this.intelligence,
-      start: this.getPosition()
-    };
   }
 }

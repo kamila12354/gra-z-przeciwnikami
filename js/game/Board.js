@@ -4,7 +4,7 @@ export class Board {
   constructor(preset) {
     this.width = preset.width;
     this.height = preset.height;
-    this.walls = new Set(preset.walls.map((wall) => this.createPositionKey(wall)));
+    this.walls = new Set(preset.walls.map((wall) => this.createPositionKey(wall)));//przyklad map()przechodzi po scianach i tworzy nowa tablice kluczy
     this.coins = new Set(preset.coins.map((coin) => this.createPositionKey(coin)));
     this.enemyStarts = new Set(preset.enemies.map((enemy) => this.createPositionKey(enemy.start)));
     this.lavaTrails = new Set();
@@ -13,12 +13,12 @@ export class Board {
     this.element = null;
   }
 
-  render() {
+  render() {//rusuje cala plansze
     const cells = [];
 
-    for (let y = 0; y < this.height; y += 1) {
-      for (let x = 0; x < this.width; x += 1) {
-        cells.push(this.createCell({ x, y }));
+    for (let y = 0; y < this.height; y += 1) {//po wierszach
+      for (let x = 0; x < this.width; x += 1) {//po kolumnach
+        cells.push(this.createCell({ x, y }));//tworzy i dodaje pojedyncze pola
       }
     }
 
@@ -67,7 +67,7 @@ export class Board {
 
   updatePlayerPosition(previousPosition, nextPosition) {
     this.getCell(previousPosition)?.classList.remove("board-cell-player");
-    this.getCell(nextPosition)?.classList.add("board-cell-player");
+    this.getCell(nextPosition)?.classList.add("board-cell-player");//usuwa klasy css
   }
 
   updateEnemyPosition(previousPosition, nextPosition) {
@@ -75,7 +75,7 @@ export class Board {
     this.getCell(nextPosition)?.classList.add("board-cell-enemy");
   }
 
-  collectCoinAt(position) {
+  collectCoinAt(position) {//zbiera monete z pola
     const key = this.createPositionKey(position);
 
     if (!this.coins.has(key)) {
@@ -86,37 +86,33 @@ export class Board {
 
     const cell = this.getCell(position);
 
-    if (cell) {
-      cell.classList.remove("board-cell-coin");
-      cell.setAttribute("aria-label", "Gracz");
+    if (cell) {//sprawdza czy pole istnieje
+      cell.classList.remove("board-cell-coin");//usuwa wyglad monety
+      cell.setAttribute("aria-label", "Gracz");// aktualizuje  opis pola
     }
 
-    return true;
+    return true;//informuje o zbieraniu monety
   }
 
-  hasCoinAt(position) {
-    return this.coins.has(this.createPositionKey(position));
-  }
-
-  hasWallAt(position) {
+  hasWallAt(position) {//czy na polu sciana
     return this.walls.has(this.createPositionKey(position));
   }
 
-  isInside({ x, y }) {
+  isInside({ x, y }) {//czy pozycja miesci sie na planszy
     return x >= 0 && y >= 0 && x < this.width && y < this.height;
   }
 
-  addLavaTrail(position) {
+  addLavaTrail(position) {//dodaje pole lawy
     const key = this.createPositionKey(position);
     this.lavaTrails.add(key);
     this.getCell(position)?.classList.add("board-cell-lava");
   }
 
-  hasLavaTrailAt(position) {
+  hasLavaTrailAt(position) {//czy na polu jest lawa
     return this.lavaTrails.has(this.createPositionKey(position));
   }
 
-  setElectricZones(positions) {
+  setElectricZones(positions) {//dodaje pole elektryczne
     positions.forEach((position) => {
       const key = this.createPositionKey(position);
       this.electricZones.add(key);
@@ -140,7 +136,7 @@ export class Board {
     return this.element?.querySelector(`[data-x="${x}"][data-y="${y}"]`) || null;
   }
 
-  createPositionKey({ x, y }) {
+  createPositionKey({ x, y }) {//zmienia wspolrzedne na tekstowy klucz
     return `${x}:${y}`;
   }
 }

@@ -13,7 +13,7 @@ export class StatsService {
   }
 
   getSummary() {
-    return this.stats.reduce((summary, entry) => {
+    return this.stats.reduce((summary, entry) => {//liczy podsumowanie wszystkich gier
       const isWin = entry.result === "wygrana";
 
       return {

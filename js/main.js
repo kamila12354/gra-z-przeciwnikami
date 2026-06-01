@@ -8,7 +8,7 @@ import { PresetListView } from "./ui/PresetListView.js";
 import { StatsView } from "./ui/StatsView.js";
 import { createErrorView, createLoadingView } from "./ui/dom.js";
 
-const app = document.querySelector("#app");
+const app = document.querySelector("#app");//szuka elemntu sluzy to wyszukania elemntow html przy uzyciu selektorow css
 const navLinks = document.querySelectorAll("[data-route-link]");
 const storageService = new StorageService();
 const presetRepository = new PresetRepository(storageService);

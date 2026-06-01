@@ -1,5 +1,5 @@
 export function createElement(tagName, options = {}) {
-  const element = document.createElement(tagName);
+  const element = document.createElement(tagName);//tworzy nowe elementy html z poziomu js
   const {
     attributes = {},
     children = [],
@@ -12,7 +12,7 @@ export function createElement(tagName, options = {}) {
   }
 
   if (text) {
-    element.textContent = text;
+    element.textContent = text;//zmienia tekst elemntu
   }
 
   Object.entries(attributes).forEach(([name, value]) => {
@@ -20,7 +20,7 @@ export function createElement(tagName, options = {}) {
   });
 
   children.forEach((child) => {
-    element.appendChild(child);
+    element.appendChild(child);//dodaje elementy do innego elemntu
   });
 
   return element;

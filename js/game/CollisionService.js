@@ -7,7 +7,7 @@ export class CollisionService {
     return this.isInsideBoard(position) && !this.isWall(position);
   }
 
-  isInsideBoard({ x, y }) {
+  isInsideBoard({ x, y }) {//czy wspolrzedne mieszcza sie na planszy
     return x >= 0 && y >= 0 && x < this.board.width && y < this.board.height;
   }
 

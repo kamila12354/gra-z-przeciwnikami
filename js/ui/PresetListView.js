@@ -78,50 +78,97 @@ export class PresetListView {
 
   createPresetCard(preset) {
     return createElement("article", {
-      className: "col-12 col-lg-6",
+      className: "col-12 col-md-6 col-xl-4",
       attributes: {
         "data-preset-card": preset.id
       },
       children: [
         createElement("div", {
-          className: "card h-100",
+          className: "preset-card",
           children: [
+
+            // TOP BAR
             createElement("div", {
-              className: "card-body",
+              className: "preset-card-top",
+              children: [
+                createElement("div", {
+                  className: "preset-badge",
+                  text: "MAPA"
+                }),
+
+                createElement("div", {
+                  className: "preset-id",
+                  text: `#${preset.id.slice(0, 4)}`
+                })
+              ]
+            }),
+
+            // PREVIEW
+            createElement("div", {
+              className: "preset-preview",
+              children: [
+                createElement("div", {
+                  className: "preview-grid"
+                })
+              ]
+            }),
+
+            // CONTENT
+            createElement("div", {
+              className: "preset-content",
               children: [
                 createElement("h2", {
-                  className: "h5 card-title",
+                  className: "preset-title",
                   text: preset.name
                 }),
-                createElement("p", {
-                  className: "card-text text-body-secondary",
-                  text: `Rozmiar: ${preset.width} x ${preset.height}. Monety: ${preset.coins.length}. Przeciwnicy: ${preset.enemies.length}.`
-                }),
+
                 createElement("div", {
-                  className: "d-flex flex-wrap gap-2",
+                  className: "preset-stats",
+                  children: [
+                    createElement("div", {
+                      className: "preset-stat",
+                      text: `📏 ${preset.width}x${preset.height}`
+                    }),
+
+                    createElement("div", {
+                      className: "preset-stat",
+                      text: `🪙 ${preset.coins.length}`
+                    }),
+
+                    createElement("div", {
+                      className: "preset-stat",
+                      text: `👾 ${preset.enemies.length}`
+                    })
+                  ]
+                }),
+
+                createElement("div", {
+                  className: "preset-actions",
                   children: [
                     createElement("a", {
-                      className: "btn btn-success",
+                      className: "btn btn-play",
                       attributes: {
                         href: `#/game/${preset.id}`
                       },
-                      text: "Graj"
+                      text: "▶ Graj"
                     }),
+
                     createElement("a", {
-                      className: "btn btn-outline-primary",
+                      className: "btn btn-edit",
                       attributes: {
                         href: `#/editor/${preset.id}`
                       },
-                      text: "Edytuj"
+                      text: "✏ Edytuj"
                     }),
+
                     createElement("button", {
-                      className: "btn btn-outline-danger",
+                      className: "btn btn-delete",
                       attributes: {
                         type: "button",
                         "data-preset-action": "delete",
                         "data-preset-id": preset.id
                       },
-                      text: "Usuń"
+                      text: "🗑 Usuń"
                     })
                   ]
                 })

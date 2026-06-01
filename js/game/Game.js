@@ -38,10 +38,10 @@ export class Game {
     this.abortController = new AbortController();
   }
 
-  start() {
+  start() {//uruchamia gre
     const boardContainer = this.root.querySelector("[data-game-board]");
     boardContainer.replaceChildren(this.board.render());
-    this.startedAt = Date.now();
+    this.startedAt = Date.now();//zapisuje moment rozpoczecia gry
     this.updateHud("Zbierz wszystkie monety");
     this.startTimer();
     this.startEnemyLoop();
@@ -49,14 +49,14 @@ export class Game {
     this.bindTouchControls();
   }
 
-  destroy() {
+  destroy() {//czysci po zakoczeniu gry
     this.abortController.abort();
     this.stopTimer();
     this.stopEnemyLoop();
   }
 
-  bindKeyboardControls() {
-    document.addEventListener("keydown", (event) => {
+  bindKeyboardControls() {//wlacza sterowanie klawiatury
+    document.addEventListener("keydown", (event) => {//nasluchuje zdarzenie np jezeli uzytkownik kliknie jakis klwisz wykonaj kod
       if (!DIRECTION_VECTORS[event.code]) {
         return;
       }
@@ -68,11 +68,11 @@ export class Game {
     });
   }
 
-  bindTouchControls() {
+  bindTouchControls() {//na telefonie
     const controls = this.root.querySelector("[data-mobile-controls]");
 
     controls.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-direction]");
+      const button = event.target.closest("[data-direction]");// event.target wskazuje elemnt closest()szuka nablizszego elementu spelniajcego warunek
 
       if (!button) {
         return;
@@ -83,7 +83,6 @@ export class Game {
       signal: this.abortController.signal
     });
   }
-
   movePlayer(direction) {
     if (this.isFinished) {
       return;
@@ -97,7 +96,7 @@ export class Game {
     };
 
     if (!this.collisionService.canMoveTo(nextPosition)) {
-      this.updateHud("Ruch zablokowany przez ścianę albo granicę mapy");
+      this.updateHud("Blokada");
       return;
     }
 
@@ -124,7 +123,7 @@ export class Game {
         return;
       }
 
-      this.updateHud(collectedCoin ? "Moneta zebrana" : "Gracz poruszony");
+      this.updateHud(collectedCoin ? "Moneta zebrana" : "Ruch gracza");
     });
   }
 
@@ -222,7 +221,7 @@ export class Game {
       return;
     }
 
-    this.updateHud("Przeciwnicy wykonali ruch");
+    this.updateHud("Ruch przeciwnika");
   }
 
   getPlayerDeathReason(position) {
@@ -247,7 +246,7 @@ export class Game {
     this.stopTimer();
     this.stopEnemyLoop();
     this.abortController.abort();
-    this.updateHud("Wygrana - zebrano wszystkie monety");
+    this.updateHud("Wygrana");
     this.showEndGameMessage("Wygrana", "Udało się zebrać wszystkie monety na mapie.", "success");
 
     if (!this.statsService) {
@@ -316,19 +315,58 @@ export class Game {
     heading.textContent = title;
 
     const text = document.createElement("p");
-    text.className = "mb-0";
+    text.className = "mb-3";
     text.textContent = description;
+
+    // kontener na przyciski
+    const actions = document.createElement("div");
+    actions.className = "d-flex gap-2";
+
+    // ZAGRAJ PONOWNIE
+    const restartButton = document.createElement("button");
+    restartButton.className = "btn btn-primary";
+    restartButton.textContent = "Zagraj ponownie";
+
+    restartButton.addEventListener("click", () => {
+      this.restartGame();
+    });
+
+    // WYJDŹ
+    const exitButton = document.createElement("button");
+    exitButton.className = "btn btn-outline-dark";
+    exitButton.textContent = "Wyjdź";
+
+    exitButton.addEventListener("click", () => {
+      window.location.hash = "#/";
+    });
+
+    actions.appendChild(restartButton);
+    actions.appendChild(exitButton);
 
     alert.appendChild(heading);
     alert.appendChild(text);
+    alert.appendChild(actions);
+
     this.root.querySelector("[data-game-board]").after(alert);
   }
 
-  isSamePosition(firstPosition, secondPosition) {
+  restartGame() {
+    this.destroy();
+
+    const newGame = new Game({
+      preset: this.preset,
+      root: this.root,
+      statsService: this.statsService
+    });
+
+    newGame.start();
+  }
+
+  isSamePosition(firstPosition, secondPosition) {//przyklad pure functions()porownuje pozycje nie zminia ich
     return firstPosition.x === secondPosition.x && firstPosition.y === secondPosition.y;
   }
 
-  formatTime(totalSeconds) {
+  formatTime(totalSeconds) {//przyklad pure functions() zawsze ten sam wynik
     const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
     const seconds = (totalSeconds % 60).toString().padStart(2, "0");
     return `${minutes}:${seconds}`;

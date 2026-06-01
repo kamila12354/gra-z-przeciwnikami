@@ -9,12 +9,12 @@ export class LavaEnemy extends Enemy {
   }
 
   move({ collisionService, playerPosition }) {
-    const previousPosition = this.getPosition();
-    const shouldChase = Math.random() <= Math.min(this.intelligence / 12, 0.75);
+    const previousPosition = this.getPosition();//zapetlenie starej pozycji
+    const shouldChase = Math.random() <= Math.min(this.intelligence / 12, 0.75);//czy bedzie gonil gracza
     let nextPosition = this.chooseRandomMove(collisionService);
 
     if (shouldChase) {
-      const moves = this.getAvailableMoves(collisionService);
+      const moves = this.getAvailableMoves(collisionService);//pobiera dostepne ruchy
       const closestMove = moves
         .map((position) => ({
           position,
@@ -22,8 +22,8 @@ export class LavaEnemy extends Enemy {
         }))
         .sort((first, second) => first.distance - second.distance)[0];
 
-      if (closestMove) {
-        nextPosition = closestMove.position;
+      if (closestMove) {//zabezpiecza jezeli lista byala by pusta
+        nextPosition = closestMove.position;//wybiera najlepszy ruch
       }
     }
 
@@ -31,7 +31,7 @@ export class LavaEnemy extends Enemy {
 
     return {
       nextPosition,
-      lavaTrail: previousPosition
+      lavaTrail: previousPosition//poprzednia pozycja tu zostaje lawa
     };
   }
 }
