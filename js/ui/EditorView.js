@@ -317,7 +317,7 @@ export class EditorView {
     return cells;
   }
 
-  createEditorCell(position) { // Generowanie pól planszy
+  createEditorCell(position) { // tworzenie pojedynczego pola planszy
     const key = this.createPositionKey(position);
     const classes = ["editor-cell"];
     let label = "Puste pole";
@@ -348,7 +348,7 @@ export class EditorView {
     });
   }
 
-  applyToolToPosition(position) { // Generowanie pól planszy
+  applyToolToPosition(position) { // zastosowanie wybranego narzedzia do pola
     const key = this.createPositionKey(position);
 
     if (this.activeTool === "wall") {
@@ -610,7 +610,7 @@ export class EditorView {
     });
   }
 
-  handleEnemySubmit(form) { // Lista przeciwników na mapie
+  handleEnemySubmit(form) { // dodawanie nowego przeciwnika
     this.clearValidation(form);
 
     const formData = new FormData(form);
@@ -762,7 +762,7 @@ export class EditorView {
     return errors;
   }
 
-  createPresetFromState() { // Walidacja danych przeciwnika
+  createPresetFromState() { // utworzenie obiektu presetu do zapisu
     return {
       id: this.preset?.id || this.createPresetId(this.name),
       name: this.name,
